@@ -1,0 +1,59 @@
+{
+  "name": "smart-code-review",
+  "version": "0.1.0",
+  "description": "AI code review that writes visual HTML reports: the verdict first, then drill down into files, findings and requirements.",
+  "license": "MIT",
+  "author": "Donovan Humphries",
+  "type": "module",
+  "bin": "bin/smart-code-review.js",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./node": {
+      "types": "./dist/node.d.ts",
+      "default": "./dist/node.js"
+    }
+  },
+  "files": [
+    "dist",
+    "bin",
+    "skill",
+    "action.yml"
+  ],
+  "engines": {
+    "node": ">=22.18"
+  },
+  "scripts": {
+    "build": "rm -rf dist && tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test test/*.test.ts",
+    "examples": "node scripts/build-examples.ts",
+    "review": "node src/cli.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Don191/smart-code-review.git"
+  },
+  "keywords": [
+    "code-review",
+    "ai",
+    "pull-request",
+    "vue",
+    "nuxt",
+    "typescript",
+    "html-report"
+  ],
+  "devDependencies": {
+    "@types/node": "^22.15.0",
+    "typescript": "^5.9.2"
+  },
+  "packageManager": "yarn@4.18.1",
+  "volta": {
+    "node": "24.22.2",
+    "yarn": "4.18.1"
+  }
+}

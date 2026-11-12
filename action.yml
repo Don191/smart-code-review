@@ -1,0 +1,69 @@
+name: smart-code-review
+description: AI code review as a visual HTML report, attached to the workflow run with the verdict in the job summary.
+branding:
+  icon: eye
+  color: purple
+inputs:
+  provider:
+    description: gemini, openai or none
+    default: gemini
+  model:
+    description: Model id. Defaults to gemini-3.1-flash-lite or gpt-5-mini.
+    default: ''
+  fail-on:
+    description: Fail the check if there's a finding this bad (blocker, major, minor). Empty never fails.
+    default: ''
+  context:
+    description: Path to a Markdown or JSON file of requirements, if you keep them in the repo.
+    default: ''
+outputs:
+  verdict:
+    description: approve, comment or request-changes
+    value: ${{ steps.review.outputs.verdict }}
+  risk:
+    description: Risk score from 0 to 100
+    value: ${{ steps.review.outputs.risk }}
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 24
+    - id: review
+      shell: bash
+      env:
+        PR_TITLE: ${{ github.event.pull_request.title }}
+        PR_BODY: ${{ github.event.pull_request.body }}
+        PR_URL: ${{ github.event.pull_request.html_url }}
+        BASE_REF: ${{ github.base_ref }}
+        INPUT_PROVIDER: ${{ inputs.provider }}
+        INPUT_MODEL: ${{ inputs.model }}
+        INPUT_FAIL_ON: ${{ inputs.fail-on }}
+        INPUT_CONTEXT: ${{ inputs.context }}
+        ACTION_PATH: ${{ github.action_path }}
+      run: |
+        set -euo pipefail
+        printf '%s' "${PR_BODY:-}" > "$RUNNER_TEMP/pr-body.md"
+        args=(--base "origin/${BASE_REF:-main}" --provider "$INPUT_PROVIDER" --out "$RUNNER_TEMP/review/index.html" --json "$RUNNER_TEMP/review/review.json" --body-file "$RUNNER_TEMP/pr-body.md")
+        [ -n "${PR_TITLE:-}" ] && args+=(--title "$PR_TITLE")
+        [ -n "${PR_URL:-}" ] && args+=(--url "$PR_URL")
+        [ -n "$INPUT_MODEL" ] && args+=(--model "$INPUT_MODEL")
+        [ -n "$INPUT_FAIL_ON" ] && args+=(--fail-on "$INPUT_FAIL_ON")
+        [ -n "$INPUT_CONTEXT" ] && args+=(--context "$INPUT_CONTEXT")
+        status=0
+        node "$ACTION_PATH/bin/smart-code-review.js" "${args[@]}" || status=$?
+        node -e '
+          const r = require(process.argv[1]);
+          const fs = require("fs");
+          const counts = ["blocker","major","minor","nit"].map(s => `${r.findings.filter(f => f.severity === s).length} ${s}`).join(" · ");
+          const label = { approve: "Looks good", comment: "Has comments", "request-changes": "Changes needed" }[r.verdict];
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, `verdict=${r.verdict}\nrisk=${r.risk}\n`);
+          const top = r.findings.slice(0, 5).map(f => `- **${f.severity}** ${f.title} (\`${f.file ?? ""}${f.line ? ":" + f.line : ""}\`)`).join("\n");
+          fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, `## ${label} · risk ${r.risk}/100\n\n${r.headline}\n\n${counts}\n\n${top}\n\nThe full report is in the **code-review** artifact.\n`);
+        ' "$RUNNER_TEMP/review/review.json"
+        exit $status
+    - uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: code-review
+        path: ${{ runner.temp }}/review/
