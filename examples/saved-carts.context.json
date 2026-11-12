@@ -1,0 +1,41 @@
+[
+  {
+    "source": "Azure DevOps",
+    "id": "AB#4821",
+    "kind": "requirement",
+    "title": "Save a cart for later",
+    "status": "Active",
+    "url": "https://dev.azure.com/example/shop/_workitems/edit/4821",
+    "summary": "As a signed-in shopper I want to save my cart so I can finish buying on another device.",
+    "acceptanceCriteria": [
+      "A signed-in shopper can save the cart with one button",
+      "The saved cart loads when the shopper signs in on another device",
+      "Saving shows a confirmation message",
+      "Guests are asked to sign in before saving"
+    ]
+  },
+  {
+    "source": "Azure DevOps",
+    "id": "AB#4790",
+    "kind": "bug",
+    "title": "Removing an item leaves it in the total",
+    "status": "Committed",
+    "url": "https://dev.azure.com/example/shop/_workitems/edit/4790",
+    "summary": "There is no way to remove an item, and the total includes items the shopper no longer wants.",
+    "reproSteps": "1. Add two items. 2. Try to remove one. 3. The total still includes it.",
+    "acceptanceCriteria": ["An item can be removed from the cart", "The total updates when an item is removed"]
+  },
+  {
+    "source": "Notion",
+    "id": "3f2a9c1e",
+    "kind": "requirement",
+    "title": "Discount codes spec",
+    "url": "https://www.notion.so/example/Discount-codes-3f2a9c1e",
+    "summary": "Shoppers can enter one discount code at checkout.",
+    "acceptanceCriteria": [
+      "Invalid codes show an error and leave the total unchanged",
+      "A code can only take off up to 50%",
+      "Codes are checked on the server"
+    ]
+  }
+]

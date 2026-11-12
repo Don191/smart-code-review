@@ -1,0 +1,119 @@
+diff --git a/app/components/CartSummary.vue b/app/components/CartSummary.vue
+index 4dc5d00..c1b608f 100644
+--- a/app/components/CartSummary.vue
++++ b/app/components/CartSummary.vue
+@@ -1,13 +1,32 @@
+ <script setup lang="ts">
+-const { items, total } = useCart()
++const props = defineProps<{ note?: string }>()
++const { items, total, grandTotal, discount, remove, save, applyCode } = useCart()
++const code = ref('')
++const saving = ref(false)
++
++async function onSave() {
++  saving.value = true
++  await save()
++  saving.value = false
++  props.note = 'Saved'
++}
+ </script>
+ 
+ <template>
+   <div class="cart">
+     <h2>Your cart</h2>
+     <ul>
+-      <li v-for="item in items" :key="item.id">{{ item.name }} × {{ item.qty }}</li>
++      <li v-for="item in items">
++        <img :src="`/img/${item.id}.webp`">
++        {{ item.name }} × {{ item.qty }}
++        <span class="remove" @click="remove(item.id)">Remove</span>
++      </li>
+     </ul>
+     <p>Total: {{ total.toFixed(2) }}</p>
++    <p v-if="discount">After discount: {{ grandTotal.toFixed(2) }}</p>
++    <div v-html="note" />
++    <input v-model="code" placeholder="Discount code">
++    <button @click="applyCode(code)">Apply</button>
++    <button :disabled="saving" @click="onSave">Save cart for later</button>
+   </div>
+ </template>
+diff --git a/app/composables/useCart.ts b/app/composables/useCart.ts
+index 2409036..aa0f779 100644
+--- a/app/composables/useCart.ts
++++ b/app/composables/useCart.ts
+@@ -8,6 +8,7 @@ export interface CartItem {
+ export function useCart() {
+   const items = useState<CartItem[]>('cart', () => [])
+   const total = computed(() => items.value.reduce((sum, i) => sum + i.price * i.qty, 0))
++  const discount = useState<number>('discount', () => 0)
+ 
+   function add(item: CartItem) {
+     const existing = items.value.find(i => i.id === item.id)
+@@ -15,5 +16,23 @@ export function useCart() {
+     else items.value.push(item)
+   }
+ 
+-  return { items, total, add }
++  function remove(id: string) {
++    items.value = items.value.filter(i => i.id != id)
++  }
++
++  async function save() {
++    items.value.forEach(async (item) => {
++      await $fetch('/api/cart', { method: 'POST', body: item })
++    })
++    localStorage.setItem('cart-saved-at', String(Date.now()))
++  }
++
++  async function applyCode(code: string) {
++    const res: any = await $fetch(`/api/cart/discount?code=${code}`)
++    discount.value = res.percent
++  }
++
++  const grandTotal = computed(() => total.value - total.value * discount.value / 100)
++
++  return { items, total, grandTotal, discount, add, remove, save, applyCode }
+ }
+diff --git a/server/api/cart/discount.get.ts b/server/api/cart/discount.get.ts
+new file mode 100644
+index 0000000..44894ee
+--- /dev/null
++++ b/server/api/cart/discount.get.ts
+@@ -0,0 +1,8 @@
++import { readFileSync } from 'node:fs'
++
++export default defineEventHandler(async (event) => {
++  const { code } = getQuery(event)
++  const codes = JSON.parse(readFileSync('./data/discounts.json', 'utf8'))
++  const rows = await db.$queryRawUnsafe(`SELECT percent FROM discounts WHERE code = '${code}'`)
++  return { percent: rows[0]?.percent ?? codes[code as string] ?? 0 }
++})
+diff --git a/server/api/cart/index.post.ts b/server/api/cart/index.post.ts
+new file mode 100644
+index 0000000..d4af2f9
+--- /dev/null
++++ b/server/api/cart/index.post.ts
+@@ -0,0 +1,10 @@
++export default defineEventHandler(async (event) => {
++  const user = await requireUser(event)
++  const item = await readBody(event)
++  console.log('saving cart item', item)
++  return db.cart.upsert({
++    where: { userId_itemId: { userId: user.id, itemId: item.id } },
++    create: { ...item, userId: user.id },
++    update: { qty: item.qty }
++  })
++})
+diff --git a/test/cart.test.ts b/test/cart.test.ts
+index 8fb3904..b9675b2 100644
+--- a/test/cart.test.ts
++++ b/test/cart.test.ts
+@@ -1,7 +1,7 @@
+ import { describe, it, expect } from 'vitest'
+ 
+ describe('cart total', () => {
+-  it('adds prices', () => {
++  it.only('adds prices', () => {
+     expect(1 + 1).toBe(2)
+   })
+ })

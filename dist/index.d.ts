@@ -1,0 +1,13 @@
+export * from './types.ts';
+export { parseDiff, addedLines, formatFile, excerpt } from './diff.ts';
+export { review, type ReviewOptions } from './review.ts';
+export { renderHtml, type RenderOptions } from './report/html.ts';
+export { PluginRegistry, BUILT_IN_PLUGINS } from './plugins/registry.ts';
+export { lineRule, type ReviewPlugin, type Rule, type RuleContext, type RuleHit } from './plugins/types.ts';
+export { javascript, typescript } from './plugins/javascript.ts';
+export { vue } from './plugins/vue.ts';
+export { nuxt, node } from './plugins/nuxt.ts';
+export { python } from './plugins/others.ts';
+export { gatherContext, parseContext, criteriaFrom, BUILT_IN_CONNECTORS, azureDevOps, notion, githubIssues, jira, type Connector, type ContextRef, type ConnectorOptions } from './connectors/index.ts';
+export { gemini, vertex, openai, providerFromEnv, openaiKeyFrom, geminiKeyFrom, type LlmProvider } from './llm/providers.ts';
+export { fromGitHubPr, parsePrUrl } from './sources/github.ts';

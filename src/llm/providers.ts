@@ -1,0 +1,130 @@
+/** Minimal LLM clients over fetch, so the package runs in Node, edge runtimes and serverless functions alike. */
+
+export interface CompleteRequest {
+  system: string
+  prompt: string
+  /** JSON schema for the reply. */
+  schema: object
+  signal?: AbortSignal
+}
+
+export interface LlmProvider {
+  name: string
+  model: string
+  complete: (req: CompleteRequest) => Promise<string>
+}
+
+async function failText(res: Response) {
+  const body = await res.text().catch(() => '')
+  try {
+    const j = JSON.parse(body)
+    return j.error?.message ?? body
+  } catch {
+    return body
+  }
+}
+
+function geminiBody(req: CompleteRequest, withSchema: boolean) {
+  return {
+    systemInstruction: { parts: [{ text: req.system }] },
+    contents: [{ role: 'user', parts: [{ text: req.prompt }] }],
+    generationConfig: {
+      temperature: 0.2,
+      responseMimeType: 'application/json',
+      ...(withSchema ? { responseJsonSchema: req.schema } : {})
+    }
+  }
+}
+
+async function geminiCall(url: string, headers: Record<string, string>, req: CompleteRequest, label: string): Promise<string> {
+  let withSchema = true
+  for (let attempt = 0; attempt < 4; attempt++) {
+    const res = await fetch(url, { method: 'POST', headers: { 'content-type': 'application/json', ...headers }, body: JSON.stringify(geminiBody(req, withSchema)), signal: req.signal })
+    if (res.ok) {
+      const data: any = await res.json()
+      const text = (data.candidates?.[0]?.content?.parts ?? []).filter((p: any) => !p.thought).map((p: any) => p.text ?? '').join('')
+      if (!text) throw new Error(`${label} returned no text (${data.candidates?.[0]?.finishReason ?? 'no candidates'})`)
+      return text
+    }
+    const msg = await failText(res)
+    // Older models don't take a JSON schema; ask for plain JSON instead.
+    if (res.status === 400 && withSchema && /schema/i.test(msg)) { withSchema = false; continue }
+    // The free tier often answers "high demand" for a few seconds.
+    if ((res.status === 429 || res.status === 503 || res.status === 500) && attempt < 3) {
+      await new Promise(r => setTimeout(r, 1500 * (attempt + 1)))
+      continue
+    }
+    throw new Error(`${label} ${res.status}: ${msg.slice(0, 300)}`)
+  }
+  throw new Error(`${label} kept failing`)
+}
+
+/** Gemini API (Google AI Studio key). The free tier works. */
+export function gemini(opts: { apiKey: string; model?: string }): LlmProvider {
+  const model = opts.model ?? 'gemini-3.1-flash-lite'
+  return {
+    name: 'Gemini',
+    model,
+    complete: (req) => geminiCall(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, { 'x-goog-api-key': opts.apiKey }, req, `Gemini ${model}`)
+  }
+}
+
+/** Gemini on Vertex AI with an OAuth access token (e.g. from `gcloud auth print-access-token`). */
+export function vertex(opts: { accessToken: string; project: string; location?: string; model?: string }): LlmProvider {
+  const model = opts.model ?? 'gemini-3.1-flash-lite'
+  const loc = opts.location ?? 'global'
+  const host = loc === 'global' ? 'aiplatform.googleapis.com' : `${loc}-aiplatform.googleapis.com`
+  return {
+    name: 'Vertex AI',
+    model,
+    complete: (req) => geminiCall(`https://${host}/v1/projects/${opts.project}/locations/${loc}/publishers/google/models/${model}:generateContent`, { authorization: `Bearer ${opts.accessToken}` }, req, `Vertex ${model}`)
+  }
+}
+
+/** OpenAI, or any server with an OpenAI-compatible chat completions API (Groq, Ollama, LM Studio...). */
+export function openai(opts: { apiKey: string; model?: string; baseUrl?: string; name?: string }): LlmProvider {
+  const model = opts.model ?? 'gpt-5-mini'
+  const base = (opts.baseUrl ?? 'https://api.openai.com/v1').replace(/\/$/, '')
+  return {
+    name: opts.name ?? (opts.baseUrl ? 'OpenAI-compatible' : 'OpenAI'),
+    model,
+    complete: async (req) => {
+      const res = await fetch(`${base}/chat/completions`, {
+        method: 'POST',
+        signal: req.signal,
+        headers: { 'content-type': 'application/json', authorization: `Bearer ${opts.apiKey}` },
+        body: JSON.stringify({
+          model,
+          messages: [{ role: 'system', content: req.system }, { role: 'user', content: req.prompt }],
+          response_format: { type: 'json_object' }
+        })
+      })
+      if (!res.ok) throw new Error(`${model} ${res.status}: ${(await failText(res)).slice(0, 300)}`)
+      const data: any = await res.json()
+      return data.choices?.[0]?.message?.content ?? ''
+    }
+  }
+}
+
+type Env = Record<string, string | undefined>
+
+/** The OpenAI key under OPENAI_API_KEY, or any casing of OPENAPI_API_KEY. */
+export function openaiKeyFrom(env: Env): string | undefined {
+  for (const [k, v] of Object.entries(env)) if (v && /^(openai|openapi)_api_key$/i.test(k)) return v
+  return undefined
+}
+
+export function geminiKeyFrom(env: Env): string | undefined {
+  return env.GEMINI_API_KEY || env.GOOGLE_GENERATIVE_AI_API_KEY || env.GOOGLE_API_KEY || env.GOOGLE_VERTEX_API_KEY
+}
+
+/** Picks a provider from env vars: `gemini` (default) or `openai`, or whichever has a key. */
+export function providerFromEnv(env: Env, which?: string, model?: string): LlmProvider | undefined {
+  const g = geminiKeyFrom(env)
+  const o = openaiKeyFrom(env)
+  const want = which ?? env.SMART_REVIEW_PROVIDER ?? (g ? 'gemini' : o ? 'openai' : undefined)
+  if (want === 'gemini' && g) return gemini({ apiKey: g, model: model ?? env.SMART_REVIEW_MODEL })
+  if (want === 'openai' && o) return openai({ apiKey: o, model: model ?? env.SMART_REVIEW_MODEL, baseUrl: env.OPENAI_BASE_URL })
+  if (want === 'vertex' && env.VERTEX_ACCESS_TOKEN && env.VERTEX_PROJECT) return vertex({ accessToken: env.VERTEX_ACCESS_TOKEN, project: env.VERTEX_PROJECT, location: env.VERTEX_LOCATION, model: model ?? env.SMART_REVIEW_MODEL })
+  return undefined
+}
