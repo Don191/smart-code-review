@@ -96,8 +96,27 @@ export interface RequirementCheck {
   files?: string[]
 }
 
+export type ModuleKind = 'frontend' | 'backend' | 'shared' | 'tests' | 'docs' | 'config'
+
+/** A high level part of the change: a workspace in a monorepo, or a layer such as frontend or backend. */
+export interface ModuleSummary {
+  name: string
+  kind: ModuleKind
+  /** Path prefix, for workspaces. */
+  root?: string
+  /** One short sentence on what changed here. */
+  summary?: string
+  impact: 'high' | 'medium' | 'low'
+  /** 0 to 100. */
+  risk: number
+  files: string[]
+  additions: number
+  deletions: number
+}
+
 export interface FileSummary {
   path: string
+  module: string
   language: string
   languageColor: string
   role: string
@@ -132,6 +151,7 @@ export interface Review {
   risk: number
   headline: string
   summary: string[]
+  modules: ModuleSummary[]
   files: FileSummary[]
   findings: Finding[]
   context: ContextItem[]

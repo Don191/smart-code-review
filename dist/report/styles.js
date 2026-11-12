@@ -38,6 +38,44 @@ h3{margin:0 0 12px;font-size:12px;letter-spacing:.06em;text-transform:uppercase;
 .pill{display:inline-block;padding:3px 12px;border-radius:99px;font-size:13px;font-weight:600;background:color-mix(in srgb,var(--vc) 16%,transparent);color:var(--vc)}
 .v-warn .pill{color:color-mix(in srgb,var(--vc) 70%,var(--fg))}
 .headline{font-size:22px;line-height:1.35;margin:8px 0 0;font-weight:600;text-wrap:pretty}
+.keys{margin:10px 0 0;padding:0;list-style:none;display:grid;gap:4px}
+.keys li{position:relative;padding-left:16px;color:var(--muted)}
+.keys li::before{content:"";position:absolute;left:2px;top:.62em;width:6px;height:6px;border-radius:2px;background:var(--accent)}
+.areas{margin:12px 0 0}
+.areas h3{margin:20px 0 10px}
+.strip{display:flex;gap:3px;height:30px;margin-bottom:10px}
+.seg{border-radius:6px;background:color-mix(in srgb,var(--rc) 30%,var(--panel));box-shadow:inset 0 -3px 0 var(--rc);text-decoration:none;display:flex;align-items:center;padding:0 8px;min-width:0;overflow:hidden}
+.seg span{font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.seg:hover{outline:1px solid var(--accent)}
+.modules{display:grid;gap:8px}
+.module{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius)}
+.module[open]{border-color:color-mix(in srgb,var(--accent) 45%,var(--line))}
+.module>summary{display:flex;align-items:center;gap:14px;padding:14px 16px}
+.module>summary::before{content:"";flex:none;width:7px;height:7px;border-right:1.5px solid var(--muted);border-bottom:1.5px solid var(--muted);transform:rotate(-45deg);transition:transform .15s;margin-right:-4px}
+.module[open]>summary::before{transform:rotate(45deg)}
+.kind{flex:none;fill:none;stroke:var(--accent);stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.m-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.m-name{font-weight:650;font-size:16px}
+.m-root{font-family:var(--mono);font-size:11px;font-weight:400;color:var(--muted)}
+.m-sum{color:var(--muted);font-size:14px;line-height:1.35}
+.impact{flex:none;font-size:12px;font-weight:600;padding:2px 9px;border-radius:99px;white-space:nowrap}
+.imp-high{background:color-mix(in srgb,var(--blocker) 15%,transparent);color:var(--blocker)}
+.imp-medium{background:color-mix(in srgb,var(--minor) 18%,transparent);color:color-mix(in srgb,var(--minor) 70%,var(--fg))}
+.imp-low{background:var(--panel2);color:var(--muted)}
+.m-marks{flex:none;display:flex;gap:8px;font-size:13px;font-weight:600;min-width:110px;justify-content:flex-end}
+.m-marks .muted{font-weight:400;font-size:12px}
+.mk-n{display:inline-flex;align-items:center;gap:3px}
+.m-size{flex:none;font-size:12px;color:var(--muted);text-align:right;min-width:70px;line-height:1.35}
+.m-body{padding:0 16px 14px 50px}
+.m-files{display:grid;gap:2px;margin-bottom:8px}
+.m-file{display:flex;gap:10px;align-items:center;text-decoration:none;padding:5px 8px;border-radius:7px}
+.m-file:hover{background:var(--panel2)}
+.m-purpose{font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:45%}
+.risk-pill{flex:none;min-width:34px;text-align:center;font-size:12px;font-weight:700;border-radius:6px;padding:1px 6px;background:color-mix(in srgb,var(--rc) 22%,var(--panel));box-shadow:inset 0 -2px 0 var(--rc)}
+h2.level{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600;margin:32px 0 10px;display:flex;align-items:center;gap:10px}
+h2.level::after{content:"";flex:1;height:1px;background:var(--line)}
+.group{position:absolute;border-radius:8px;background:var(--panel2);border:2px solid var(--panel)}
+.g-name{position:absolute;left:8px;top:2px;font-size:11px;font-weight:600;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:calc(100% - 12px)}
 .why{margin-top:10px}
 .why summary{cursor:pointer;color:var(--muted);font-size:13px;width:max-content}
 .why ul{margin:8px 0 0;padding-left:20px}
@@ -56,6 +94,8 @@ h3{margin:0 0 12px;font-size:12px;letter-spacing:.06em;text-transform:uppercase;
 .plus{color:var(--add-fg)}.minus{color:var(--del-fg)}
 
 .overview{display:grid;grid-template-columns:2fr 1fr;gap:12px;margin-bottom:12px}
+.overview.one{grid-template-columns:1fr}
+.overview.one .treemap{aspect-ratio:10/2.4}
 .overview.two{grid-template-columns:1fr 1fr;margin-bottom:24px}
 .overview.two:empty{display:none}
 .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;min-width:0}
@@ -152,7 +192,6 @@ details>summary::-webkit-details-marker{display:none}
 .fix-label{font-size:12px;color:var(--muted);margin-bottom:4px}
 .fix .ln .mk{width:22px}
 
-.file .risk-pill{flex:none;min-width:34px;text-align:center;font-size:12px;font-weight:700;border-radius:6px;padding:1px 6px;background:color-mix(in srgb,var(--rc) 22%,var(--panel));box-shadow:inset 0 -2px 0 var(--rc)}
 .lang{flex:none;width:10px;height:10px;border-radius:50%;background:var(--lc)}
 .path{flex:1;min-width:0;font-family:var(--mono);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .path .dir{color:var(--muted)}
@@ -182,7 +221,9 @@ footer{margin-top:32px;color:var(--muted);font-size:12px;text-align:center}
 @keyframes flash{0%,40%{box-shadow:0 0 0 3px var(--accent)}100%{box-shadow:0 0 0 0 transparent}}
 
 @media (max-width:820px){
-  .overview,.overview.two{grid-template-columns:1fr}
+  .overview,.overview.one{grid-template-columns:1fr}
+.overview.one .treemap{aspect-ratio:10/2.4}
+.overview.two{grid-template-columns:1fr}
   .signals{grid-template-columns:repeat(2,1fr)}
   .verdict{flex-direction:column;align-items:flex-start;gap:8px;padding:16px}
   .g{width:120px}.gauge{width:120px}
@@ -190,6 +231,12 @@ footer{margin-top:32px;color:var(--muted);font-size:12px;text-align:center}
   .role,.churn{display:none}
   .treemap{aspect-ratio:4/3}
   .f-body{padding-left:14px}
+  .module>summary{flex-wrap:wrap;gap:8px 12px}
+  .m-main{flex-basis:calc(100% - 50px)}
+  .impact{margin-left:34px}
+  .m-marks{min-width:0;justify-content:flex-start}
+  .m-body{padding-left:16px}
+  .m-purpose{display:none}
   .finding>summary{flex-wrap:wrap;row-gap:4px}
   .finding .f-title{flex-basis:calc(100% - 50px)}
   .finding>summary .tag{margin-left:35px}

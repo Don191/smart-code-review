@@ -32,6 +32,7 @@ Options
   --working              Review uncommitted changes
   --context <file>       Requirements or bugs as Markdown or JSON (repeatable)
   --instructions <file>  House review rules (default: .smart-code-review.md if present)
+                         Module names can be set in .smart-code-review.json
   --plugin <module>      Load a plugin module (repeatable)
   --provider <name>      gemini (default), openai, vertex or none
   --model <id>           Model id, e.g. gemini-3.1-flash-lite
@@ -114,8 +115,11 @@ async function main() {
     const provider = a.provider === 'none' ? undefined : providerFromEnv(env, a.provider, a.model);
     if (!provider && a.provider !== 'none')
         log('No AI key found (GEMINI_API_KEY or OPENAI_API_KEY), so only static checks will run.');
+    // Optional module names, e.g. {"modules": [{"name": "Portal", "paths": ["apps/portal/"]}]}
+    const config = existsSync('.smart-code-review.json') ? JSON.parse(readFileSync('.smart-code-review.json', 'utf8')) : {};
     const result = await review(input, {
         provider,
+        modules: config.modules,
         plugins,
         context,
         env,

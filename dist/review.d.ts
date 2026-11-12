@@ -1,5 +1,6 @@
 import { type Connector } from './connectors/index.ts';
 import type { LlmProvider } from './llm/providers.ts';
+import { type ModuleRule } from './modules.ts';
 import { PluginRegistry } from './plugins/registry.ts';
 import type { ReviewPlugin } from './plugins/types.ts';
 import { type ChangeInput, type ContextItem, type Review } from './types.ts';
@@ -20,6 +21,8 @@ export interface ReviewOptions {
     fetchContext?: boolean;
     /** House rules added to the prompt. */
     instructions?: string;
+    /** Name the high level modules yourself (portal, API...). Otherwise workspaces or layers are used. */
+    modules?: ModuleRule[];
     /** Paths to leave out of the review. */
     ignore?: (path: string) => boolean;
     onProgress?: (step: string) => void;

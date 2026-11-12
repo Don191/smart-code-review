@@ -1,6 +1,7 @@
 export * from "./types.js";
 export { parseDiff, addedLines, formatFile, excerpt } from "./diff.js";
 export { review } from "./review.js";
+export { moduleOf, looksLikeMonorepo, kindFromName } from "./modules.js";
 export { renderHtml } from "./report/html.js";
 export { PluginRegistry, BUILT_IN_PLUGINS } from "./plugins/registry.js";
 export { lineRule } from "./plugins/types.js";
