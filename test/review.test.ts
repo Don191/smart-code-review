@@ -150,3 +150,15 @@ test('renders a self-contained report', async () => {
   const data = JSON.parse(html.match(/<script type="application\/json" id="review-data">([\s\S]*?)<\/script>/)![1]!)
   assert.equal(data.verdict, r.verdict)
 })
+
+test('groups files into modules', async () => {
+  const r = await review({ diff }, { fetchContext: false })
+  assert.deepEqual(r.modules.map(m => m.name).sort(), ['Backend', 'Frontend', 'Tests'])
+  const mono = await review({ diff: diff.replaceAll('app/components/', 'apps/portal/components/').replaceAll('server/api/', 'apps/api/server/api/') }, { fetchContext: false })
+  const names = mono.modules.map(m => m.name)
+  assert.ok(names.includes('portal') && names.includes('api'))
+  assert.equal(mono.modules.find(m => m.name === 'portal')!.kind, 'frontend')
+  assert.equal(mono.modules.find(m => m.name === 'api')!.kind, 'backend')
+  const custom = await review({ diff }, { fetchContext: false, modules: [{ name: 'Checkout', paths: ['app/', 'server/api/cart/'] }] })
+  assert.ok(custom.modules.some(m => m.name === 'Checkout' && m.files.length === 4))
+})

@@ -1,6 +1,7 @@
 export * from './types.ts'
 export { parseDiff, addedLines, formatFile, excerpt } from './diff.ts'
 export { review, type ReviewOptions } from './review.ts'
+export { moduleOf, looksLikeMonorepo, kindFromName, type ModuleRule } from './modules.ts'
 export { renderHtml, type RenderOptions } from './report/html.ts'
 export { PluginRegistry, BUILT_IN_PLUGINS } from './plugins/registry.ts'
 export { lineRule, type ReviewPlugin, type Rule, type RuleContext, type RuleHit } from './plugins/types.ts'

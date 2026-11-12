@@ -4,7 +4,8 @@ AI code review that writes a visual HTML report. The report opens on the verdict
 
 ![A review report: verdict, risk gauge, findings, requirements and a risk map of the changed files](docs/report.png)
 
-- **Verdict first.** One headline sentence, a risk gauge and four signals: findings by severity, requirements met, tests, size.
+- **Summary first.** A verdict, a risk gauge, one headline sentence on what the change does, and up to three key changes.
+- **Then the areas it touches.** One short section per module: each workspace in a monorepo (portal, api, ui...) or each layer (frontend, backend, shared, tests, config). Each says what changed there, its impact and its findings, and opens to list its files.
 - **Then where to look.** A map of the changed files sized by lines changed and coloured by risk, the three findings to read first, and a grid of findings by kind.
 - **Then the detail.** Each finding opens to show the lines it is about and a suggested change. Each file opens to show its findings and diff. Each requirement opens to show the evidence.
 - **Knows what the change was for.** Linked Azure DevOps work items, Notion pages, GitHub issues and Jira tickets are fetched, and every acceptance criterion is checked against the diff.
@@ -153,6 +154,14 @@ jobs:
 ```
 
 The verdict and top findings go in the job summary, and the HTML report is uploaded as the `code-review` artifact.
+
+## Modules
+
+In a monorepo each workspace under `apps/`, `packages/`, `services/` or `libs/` is a module. Otherwise files are grouped by layer. To name them yourself, add `.smart-code-review.json`:
+
+```json
+{ "modules": [{ "name": "Portal", "kind": "frontend", "paths": ["apps/portal/", "packages/portal-ui/"] }] }
+```
 
 ## House rules
 

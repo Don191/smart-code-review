@@ -22,7 +22,29 @@ export declare const AI_SCHEMA: {
                 readonly type: "string";
             };
             readonly maxItems: 3;
-            readonly description: "Up to 3 short points a reviewer must know. Each under 20 words.";
+            readonly description: "The key changes, up to 3 short points. Each under 14 words. Say what the change does; problems belong in findings.";
+        };
+        readonly modules: {
+            readonly type: "array";
+            readonly description: "One entry per module listed under \"Modules\".";
+            readonly items: {
+                readonly type: "object";
+                readonly properties: {
+                    readonly name: {
+                        readonly type: "string";
+                    };
+                    readonly summary: {
+                        readonly type: "string";
+                        readonly description: "What changed in this module, under 12 words. Say what it does now; problems belong in findings.";
+                    };
+                    readonly impact: {
+                        readonly type: "string";
+                        readonly enum: readonly ["high", "medium", "low"];
+                        readonly description: "How much this module's behaviour changes for users or other modules.";
+                    };
+                };
+                readonly required: readonly ["name", "summary", "impact"];
+            };
         };
         readonly files: {
             readonly type: "array";
@@ -123,7 +145,7 @@ export declare const AI_SCHEMA: {
             readonly required: readonly ["adequate"];
         };
     };
-    readonly required: readonly ["verdict", "risk", "headline", "summary", "files", "findings", "requirements", "tests"];
+    readonly required: readonly ["verdict", "risk", "headline", "summary", "modules", "files", "findings", "requirements", "tests"];
 };
 export declare const SYSTEM_PROMPT = "You review code changes like a careful senior engineer.\n\nReport only real problems in the changed lines: bugs, security holes, data loss, performance traps, missing tests for risky logic, accessibility failures, and requirements the change does not meet. Skip style preferences and anything a formatter or linter would fix. Do not praise. If the change is fine, say so and return few or no findings.\n\nRules for findings:\n- Always give the file and the new-file line number, read from the number at the start of each diff line.\n- severity: blocker = must not merge (breaks things, security hole, data loss); major = likely bug or clear risk; minor = worth fixing; nit = optional.\n- Do not repeat issues listed under \"Already found by static checks\".\n- Write in plain English. Short titles. No markdown in titles.\n\nIf requirements, bugs or tickets are given, check every acceptance criterion against the diff. \"met\" needs code in the diff that does it; \"partial\" when some of it is there; \"missing\" when nothing in the diff does it; \"unclear\" when it can't be told from the diff. Missing criteria count against the verdict.\n\nReply with JSON only, matching the schema.";
 /** Criteria to check for an item. A bug with none gets one: that it is fixed. */
@@ -132,6 +154,10 @@ export declare function buildPrompt(args: {
     input: ChangeInput;
     files: DiffFile[];
     roles: Record<string, string>;
+    modules: {
+        name: string;
+        files: string[];
+    }[];
     guidance: string[];
     ruleFindings: Finding[];
     context: ContextItem[];

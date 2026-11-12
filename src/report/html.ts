@@ -1,5 +1,5 @@
 import { excerpt } from '../diff.ts'
-import { CATEGORIES, SEVERITIES, type Category, type DiffFile, type DiffLine, type Finding, type RequirementCheck, type Review, type Severity } from '../types.ts'
+import { CATEGORIES, SEVERITIES, type Category, type ModuleSummary, type DiffFile, type DiffLine, type Finding, type RequirementCheck, type Review, type Severity } from '../types.ts'
 import { CSS } from './styles.ts'
 import { SCRIPT } from './script.ts'
 import { squarify } from './treemap.ts'
@@ -121,25 +121,88 @@ function findingRow(f: Finding, files: Map<string, DiffFile>): string {
 </details>`
 }
 
-function treemap(review: Review): string {
-  const live = review.files.filter(f => f.role !== 'Lockfile' && f.role !== 'Generated' && f.role !== 'Binary')
-  const W = 1000
-  const H = 300
-  const rects = squarify(live.map(f => ({ item: f, value: f.additions + f.deletions + 6 })), W, H)
-  const counts = new Map<string, Finding[]>()
-  for (const f of review.findings) if (f.file) counts.set(f.file, [...(counts.get(f.file) ?? []), f])
-  const tiles = rects.map(({ item: f, x, y, w, h }) => {
+function fileTiles(files: Review['files'], counts: Map<string, Finding[]>, box: { x: number; y: number; w: number; h: number }, W: number, H: number): string {
+  return squarify(files.map(f => ({ item: f, value: f.additions + f.deletions + 6 })), box.w, box.h).map(({ item: f, x, y, w, h }) => {
     const fs = counts.get(f.path) ?? []
     const small = w < 90 || h < 46
     const tiny = w < 46 || h < 26
     const marks = SEVERITIES.flatMap(s => fs.filter(x => x.severity === s).slice(0, 4).map(() => sevIcon(s, 10))).slice(0, 6).join('')
-    return `<button class="tile${small ? ' small' : ''}${tiny ? ' tiny' : ''}" data-open-file="${esc(f.path)}" style="left:${(x / W) * 100}%;top:${(y / H) * 100}%;width:${(w / W) * 100}%;height:${(y + h >= H - 0.5 ? (H - y) / H : h / H) * 100}%;--rc:${riskColor(f.risk)}" title="${esc(f.path)} · risk ${f.risk} · +${f.additions} −${f.deletions}${fs.length ? ` · ${fs.length} finding${fs.length > 1 ? 's' : ''}` : ''}">
-      ${tiny ? '' : `<span class="t-name">${esc(base(f.path))}</span>${small ? '' : `<span class="t-dir">${esc(dir(f.path))}</span>`}<span class="t-marks">${marks}</span>`}
+    return `<button class="tile${small ? ' small' : ''}${tiny ? ' tiny' : ''}" data-open-file="${esc(f.path)}" style="left:${((box.x + x) / W) * 100}%;top:${((box.y + y) / H) * 100}%;width:${(w / W) * 100}%;height:${(h / H) * 100}%;--rc:${riskColor(f.risk)}" title="${esc(f.path)} · risk ${f.risk} · +${f.additions} −${f.deletions}${fs.length ? ` · ${fs.length} finding${fs.length > 1 ? 's' : ''}` : ''}">
+      ${tiny ? '' : `<span class="t-name">${esc(base(f.path))}</span><span class="t-marks">${marks}</span>`}
     </button>`
   }).join('')
-  return `<div class="treemap" role="group" aria-label="Changed files sized by lines changed and coloured by risk">${tiles}</div>
+}
+
+/** Files grouped by module, sized by lines changed and coloured by risk. */
+function treemap(review: Review): string {
+  const live = review.files.filter(f => f.role !== 'Lockfile' && f.role !== 'Generated' && f.role !== 'Binary')
+  const W = 1000
+  const H = 320
+  const LABEL = 36
+  const counts = new Map<string, Finding[]>()
+  for (const f of review.findings) if (f.file) counts.set(f.file, [...(counts.get(f.file) ?? []), f])
+  const groups = review.modules
+    .map(m => ({ m, files: live.filter(f => f.module === m.name) }))
+    .filter(g => g.files.length)
+  const out: string[] = []
+  if (groups.length < 2) {
+    out.push(fileTiles(live, counts, { x: 0, y: 0, w: W, h: H }, W, H))
+  } else {
+    for (const { item: g, x, y, w, h } of squarify(groups.map(g => ({ item: g, value: g.files.reduce((s, f) => s + f.additions + f.deletions + 6, 0) })), W, H)) {
+      const pad = 3
+      out.push(`<div class="group" style="left:${(x / W) * 100}%;top:${(y / H) * 100}%;width:${(w / W) * 100}%;height:${(h / H) * 100}%"><span class="g-name">${esc(g.m.name)}</span></div>`)
+      if (h > LABEL + 12) out.push(fileTiles(g.files, counts, { x: x + pad, y: y + LABEL, w: w - pad * 2, h: h - LABEL - pad }, W, H))
+    }
+  }
+  return `<div class="treemap" role="group" aria-label="Changed files grouped by module, sized by lines changed and coloured by risk">${out.join('')}</div>
   <div class="legend"><span>Size: lines changed</span><span class="scale"><i style="background:${riskColor(5)}"></i><i style="background:${riskColor(40)}"></i><i style="background:${riskColor(65)}"></i><i style="background:${riskColor(95)}"></i></span><span>Colour: risk</span></div>`
 }
+
+const KIND_ICON: Record<ModuleSummary['kind'], string> = {
+  frontend: '<rect x="2" y="3" width="16" height="11" rx="1.5"/><path d="M7 17h6M10 14v3"/>',
+  backend: '<rect x="3" y="3" width="14" height="5.5" rx="1.2"/><rect x="3" y="11" width="14" height="5.5" rx="1.2"/><path d="M6 5.8h.01M6 13.8h.01"/>',
+  shared: '<path d="M10 2.5l7 3.8v7.4l-7 3.8-7-3.8V6.3z"/><path d="M3 6.3l7 3.8 7-3.8M10 10.1v7.4"/>',
+  tests: '<path d="M7.5 2.5h5M8.5 2.5v5L4 15.5a1.4 1.4 0 0 0 1.2 2h9.6a1.4 1.4 0 0 0 1.2-2L11.5 7.5v-5"/><path d="M6 12.5h8"/>',
+  docs: '<path d="M5 2.5h7l3.5 3.5v11.5H5z"/><path d="M12 2.5V6h3.5M7.5 10h5M7.5 13h5"/>',
+  config: '<circle cx="10" cy="10" r="2.6"/><path d="M10 2.5v2.2M10 15.3v2.2M2.5 10h2.2M15.3 10h2.2M4.7 4.7l1.6 1.6M13.7 13.7l1.6 1.6M4.7 15.3l1.6-1.6M13.7 6.3l1.6-1.6"/>'
+}
+const KIND_LABEL: Record<ModuleSummary['kind'], string> = { frontend: 'Frontend', backend: 'Backend', shared: 'Shared', tests: 'Tests', docs: 'Docs', config: 'Config' }
+
+function kindIcon(k: ModuleSummary['kind']): string {
+  return `<svg class="kind k-${k}" width="20" height="20" viewBox="0 0 20 20" aria-label="${KIND_LABEL[k]}" role="img">${KIND_ICON[k]}</svg>`
+}
+
+/** The areas the change touches: a bar of modules, then one short section per module. */
+function areas(review: Review, diffByPath: Map<string, DiffFile>): string {
+  // Lockfiles and generated files would swamp the bar, so they don't count towards its size.
+  const sized = new Map(review.modules.map(m => [m.name, review.files.filter(f => f.module === m.name && !['Lockfile', 'Generated', 'Binary'].includes(f.role)).reduce((s, f) => s + f.additions + f.deletions, 0) + 2]))
+  const total = [...sized.values()].reduce((a, b) => a + b, 0) || 1
+  const strip = review.modules.map(m => {
+    const pct = (sized.get(m.name)! / total) * 100
+    return `<a class="seg" href="#mod-${slug(m.name)}" data-target="mod-${slug(m.name)}" data-open-tab="" style="flex:${Math.max(pct, 4)};--rc:${riskColor(m.risk)}" title="${esc(m.name)} · ${m.files.length} file${m.files.length > 1 ? 's' : ''} · +${m.additions} −${m.deletions}">${pct > 9 ? `<span>${esc(m.name)}</span>` : ''}</a>`
+  }).join('')
+  const rows = review.modules.map(m => {
+    const fs = review.findings.filter(f => f.file && m.files.includes(f.file))
+    const files = review.files.filter(f => f.module === m.name)
+    const marks = SEVERITIES.map(s => fs.filter(x => x.severity === s).length ? `<span class="mk-n">${sevIcon(s, 12)}${fs.filter(x => x.severity === s).length}</span>` : '').join('')
+    return `<details class="module" id="mod-${slug(m.name)}">
+      <summary>
+        ${kindIcon(m.kind)}
+        <span class="m-main"><span class="m-name">${esc(m.name)}${m.root ? ` <span class="m-root">${esc(m.root)}</span>` : ''}</span>${m.summary ? `<span class="m-sum">${esc(m.summary)}</span>` : ''}</span>
+        <span class="impact imp-${m.impact}" title="Risk ${m.risk}">${m.impact[0]!.toUpperCase()}${m.impact.slice(1)} impact</span>
+        <span class="m-marks">${marks || '<span class="muted">No findings</span>'}</span>
+        <span class="m-size">${files.length} file${files.length > 1 ? 's' : ''}<br><span class="plus">+${m.additions}</span> <span class="minus">−${m.deletions}</span></span>
+      </summary>
+      <div class="m-body">
+        <div class="m-files">${files.map(f => `<a class="m-file" href="#${fileId(f.path)}" data-open-file="${esc(f.path)}"><span class="risk-pill" style="--rc:${riskColor(f.risk)}">${f.risk}</span><span class="path"><span class="dir">${esc(m.root && f.path.startsWith(m.root) ? dir(f.path).slice(m.root.length) : dir(f.path))}</span>${esc(base(f.path))}</span><span class="m-purpose">${esc(f.purpose ?? f.role)}</span></a>`).join('')}</div>
+        ${fs.length ? `<div class="list nested">${fs.map(x => findingRow(x, diffByPath)).join('')}</div>` : ''}
+      </div>
+    </details>`
+  }).join('')
+  return `<section class="areas"><h3>Areas changed</h3><div class="strip">${strip}</div><div class="modules">${rows}</div></section>`
+}
+
+const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-')
 
 function reqStrip(review: Review): string {
   if (!review.context.length && !review.requirements.length) return ''
@@ -276,13 +339,16 @@ export function renderHtml(review: Review, opts: RenderOptions = {}): string {
     <div class="v-text">
       <span class="pill">${v.label}</span>
       <p class="headline">${esc(review.headline)}</p>
-      ${review.summary.length ? `<details class="why"><summary>Why</summary><ul>${review.summary.map(s => `<li>${esc(s)}</li>`).join('')}</ul></details>` : ''}
+      ${review.summary.length ? `<ul class="keys">${review.summary.map(s => `<li>${esc(s)}</li>`).join('')}</ul>` : ''}
     </div>
   </section>
 
+  ${areas(review, diffByPath)}
+
+  <h2 class="level">Details</h2>
   ${signals}
 
-  <section class="overview">
+  <section class="overview${topList.length ? '' : ' one'}">
     <div class="panel"><h3>Where the risk is</h3>${treemap(review)}</div>
     ${topList.length ? `<div class="panel"><h3>Look here first</h3><ol class="first">${topList.map(f => `<li><a href="#${f.id}" data-open-tab="tab-findings" data-target="${f.id}">${sevIcon(f.severity, 16)}<span><b>${esc(f.title)}</b><small>${f.file ? `${esc(base(f.file))}${f.line ? `:${f.line}` : ''}` : ''}</small></span></a></li>`).join('')}</ol></div>` : ''}
   </section>

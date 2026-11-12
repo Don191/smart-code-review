@@ -3,6 +3,7 @@ import { gatherContext, type Connector } from './connectors/index.ts'
 import { AI_SCHEMA, SYSTEM_PROMPT, buildPrompt, criteriaOf, parseJson } from './llm/prompt.ts'
 import type { LlmProvider } from './llm/providers.ts'
 import { lockfile } from './plugins/others.ts'
+import { looksLikeMonorepo, moduleOf, type ModuleRule } from './modules.ts'
 import { PluginRegistry } from './plugins/registry.ts'
 import type { ReviewPlugin } from './plugins/types.ts'
 import {
@@ -12,6 +13,7 @@ import {
   type ContextItem,
   type DiffFile,
   type FileSummary,
+  type ModuleSummary,
   type Finding,
   type RequirementCheck,
   type Review,
@@ -36,6 +38,8 @@ export interface ReviewOptions {
   fetchContext?: boolean
   /** House rules added to the prompt. */
   instructions?: string
+  /** Name the high level modules yourself (portal, API...). Otherwise workspaces or layers are used. */
+  modules?: ModuleRule[]
   /** Paths to leave out of the review. */
   ignore?: (path: string) => boolean
   onProgress?: (step: string) => void
@@ -71,6 +75,8 @@ export async function review(input: ChangeInput, opts: ReviewOptions = {}): Prom
   if (!diff.length) throw new Error('The diff has no files to review.')
   const paths = diff.map(f => f.path)
   const frameworks = registry.frameworks(paths)
+  const monorepo = looksLikeMonorepo(paths)
+  const moduleInfo = new Map<string, { kind: ModuleSummary['kind']; root?: string }>()
 
   // Language, role and checks for each file.
   const roles: Record<string, string> = {}
@@ -88,8 +94,11 @@ export async function review(input: ChangeInput, opts: ReviewOptions = {}): Prom
     if (lockfile(f.path)) { role = 'Lockfile'; skip.add(f.path) }
     else if (GENERATED.test(f.path) || f.binary) { role = f.binary ? 'Binary' : 'Generated'; skip.add(f.path) }
     roles[f.path] = role
+    const mod = moduleOf(f.path, role, monorepo, opts.modules)
+    if (!moduleInfo.has(mod.name)) moduleInfo.set(mod.name, { kind: mod.kind, root: mod.root })
     summaries.set(f.path, {
       path: f.path,
+      module: mod.name,
       language: lang?.label ?? 'Other',
       languageColor: lang?.color ?? '#8b949e',
       role,
@@ -157,7 +166,8 @@ export async function review(input: ChangeInput, opts: ReviewOptions = {}): Prom
     const reviewable = diff
       .filter(f => !skip.has(f.path))
       .sort((a, b) => (b.additions + b.deletions) * (1 + Math.max(0, roleRiskOf(roles[b.path]!))) - (a.additions + a.deletions) * (1 + Math.max(0, roleRiskOf(roles[a.path]!))))
-    const { prompt, truncated } = buildPrompt({ input, files: reviewable, roles, guidance: [...guidance], ruleFindings: grouped, context, extraInstructions: opts.instructions })
+    const modList = [...moduleInfo.keys()].map(name => ({ name, files: [...summaries.values()].filter(s => s.module === name).map(s => s.path) }))
+    const { prompt, truncated } = buildPrompt({ input, files: reviewable, roles, modules: modList, guidance: [...guidance], ruleFindings: grouped, context, extraInstructions: opts.instructions })
     if (truncated.length) warnings.push(`The diff was too long, so ${truncated.length} file${truncated.length > 1 ? 's were' : ' was'} not sent to the model: ${truncated.slice(0, 5).join(', ')}${truncated.length > 5 ? '…' : ''}`)
     try {
       ai = parseJson(await opts.provider.complete({ system: SYSTEM_PROMPT, prompt, schema: AI_SCHEMA, signal: opts.signal }))
@@ -214,6 +224,31 @@ export async function review(input: ChangeInput, opts: ReviewOptions = {}): Prom
     if (grouped.some(g => g.file === s.path && g.severity === 'blocker')) s.risk = Math.max(s.risk, 85)
   }
   const files = [...summaries.values()].sort((a, b) => b.risk - a.risk || b.additions + b.deletions - (a.additions + a.deletions))
+
+  // High level modules: what changed in each and how risky it is.
+  const aiModules = new Map<string, any>()
+  for (const m of Array.isArray(ai?.modules) ? ai.modules : []) if (m?.name) aiModules.set(String(m.name).toLowerCase(), m)
+  const modules: ModuleSummary[] = [...moduleInfo.entries()].map(([name, info]) => {
+    const fs = files.filter(f => f.module === name)
+    const live = fs.filter(f => !skip.has(f.path))
+    const size = fs.reduce((s, f) => s + f.additions + f.deletions, 0)
+    const risk = live.length ? clamp(Math.max(...live.map(f => f.risk)) * 0.6 + (live.reduce((s, f) => s + f.risk * (f.additions + f.deletions + 1), 0) / (live.reduce((s, f) => s + f.additions + f.deletions + 1, 0))) * 0.4) : 2
+    const a = aiModules.get(name.toLowerCase())
+    const impact: ModuleSummary['impact'] = ['high', 'medium', 'low'].includes(a?.impact) ? a.impact : risk >= 60 || size > 300 ? 'high' : risk >= 30 || size > 60 ? 'medium' : 'low'
+    return {
+      name,
+      kind: info.kind,
+      root: info.root,
+      summary: typeof a?.summary === 'string' ? a.summary : undefined,
+      impact,
+      risk,
+      files: fs.map(f => f.path),
+      additions: fs.reduce((s, f) => s + f.additions, 0),
+      deletions: fs.reduce((s, f) => s + f.deletions, 0)
+    }
+  })
+  const impactRank = { high: 0, medium: 1, low: 2 }
+  modules.sort((a, b) => impactRank[a.impact] - impactRank[b.impact] || b.risk - a.risk)
 
   // One row per criterion, filled in from the model's answers by id.
   const answers = new Map<string, any>()
@@ -274,6 +309,7 @@ export async function review(input: ChangeInput, opts: ReviewOptions = {}): Prom
     risk,
     headline,
     summary,
+    modules,
     files,
     findings: grouped,
     context,

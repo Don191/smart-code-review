@@ -7,7 +7,20 @@ export const AI_SCHEMA = {
     verdict: { type: 'string', enum: ['approve', 'comment', 'request-changes'] },
     risk: { type: 'integer', minimum: 0, maximum: 100, description: 'How risky it is to merge: 0 trivial, 100 likely to break production.' },
     headline: { type: 'string', description: 'One plain sentence, at most 18 words: what the change does, then the main problem if any. E.g. "Adds CSV export, but large exports load every row into memory."' },
-    summary: { type: 'array', items: { type: 'string' }, maxItems: 3, description: 'Up to 3 short points a reviewer must know. Each under 20 words.' },
+    summary: { type: 'array', items: { type: 'string' }, maxItems: 3, description: 'The key changes, up to 3 short points. Each under 14 words. Say what the change does; problems belong in findings.' },
+    modules: {
+      type: 'array',
+      description: 'One entry per module listed under "Modules".',
+      items: {
+        type: 'object',
+        properties: {
+          name: { type: 'string' },
+          summary: { type: 'string', description: 'What changed in this module, under 12 words. Say what it does now; problems belong in findings.' },
+          impact: { type: 'string', enum: ['high', 'medium', 'low'], description: 'How much this module\'s behaviour changes for users or other modules.' }
+        },
+        required: ['name', 'summary', 'impact']
+      }
+    },
     files: {
       type: 'array',
       items: {
@@ -56,7 +69,7 @@ export const AI_SCHEMA = {
       required: ['adequate']
     }
   },
-  required: ['verdict', 'risk', 'headline', 'summary', 'files', 'findings', 'requirements', 'tests']
+  required: ['verdict', 'risk', 'headline', 'summary', 'modules', 'files', 'findings', 'requirements', 'tests']
 } as const
 
 export const SYSTEM_PROMPT = `You review code changes like a careful senior engineer.
@@ -85,6 +98,7 @@ export function buildPrompt(args: {
   input: ChangeInput
   files: DiffFile[]
   roles: Record<string, string>
+  modules: { name: string; files: string[] }[]
   guidance: string[]
   ruleFindings: Finding[]
   context: ContextItem[]
@@ -117,6 +131,7 @@ export function buildPrompt(args: {
     for (const f of ruleFindings.slice(0, 40)) parts.push(`- ${f.file}:${f.line ?? ''} ${f.title}`)
   }
 
+  parts.push(`\n# Modules\n${args.modules.map(m => `- ${m.name}: ${m.files.slice(0, 12).join(', ')}${m.files.length > 12 ? ` and ${m.files.length - 12} more` : ''}`).join('\n')}`)
   parts.push(`\n# Files\n${files.map(f => `- ${f.path} (${roles[f.path] ?? 'file'}, ${f.status}, +${f.additions} -${f.deletions})`).join('\n')}`)
 
   // Biggest-risk files first, so if the diff is cut it's the low-value files that go.
