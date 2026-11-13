@@ -1,6 +1,8 @@
 /** Shared types for diffs, findings, context and the finished review. */
 export type Severity = 'blocker' | 'major' | 'minor' | 'nit';
 export declare const SEVERITIES: Severity[];
+/** The same severities on the common critical to low scale, for tools that use it. */
+export declare const SEVERITY_LEVEL: Record<Severity, 'critical' | 'high' | 'medium' | 'low'>;
 export type Category = 'bug' | 'security' | 'performance' | 'maintainability' | 'tests' | 'accessibility' | 'requirements' | 'style';
 export declare const CATEGORIES: Category[];
 export type Verdict = 'approve' | 'comment' | 'request-changes';

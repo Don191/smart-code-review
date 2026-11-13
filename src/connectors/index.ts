@@ -62,6 +62,8 @@ export async function gatherContext(
   input: ChangeInput,
   opts: ConnectorOptions & { connectors?: Connector[]; max?: number; have?: string[] }
 ): Promise<GatherResult> {
+  // AGIlity's lite mode hands work items in from its local board and makes no outside calls.
+  if (opts.env?.AGILITY_MODE === 'lite' || opts.env?.SMART_CODE_REVIEW_OFFLINE === '1') return { items: [], connectors: [], warnings: [] }
   const have = new Set(opts.have ?? [])
   const text = [input.title, input.description, input.head, ...(input.commits ?? [])].filter(Boolean).join('\n')
   const items: ContextItem[] = []

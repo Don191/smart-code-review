@@ -9,6 +9,24 @@ import { SEVERITIES } from "./types.js";
 const SEVERITY_WEIGHT = { blocker: 45, major: 22, minor: 7, nit: 1 };
 const GENERATED = /(^|\/)(dist|build|\.output|\.nuxt|coverage|vendor)\/|\.min\.(js|css)$|\.map$|\.snap$/;
 const clamp = (n, lo = 0, hi = 100) => Math.max(lo, Math.min(hi, Math.round(n)));
+/**
+ * Ids that stay the same when the same change is reviewed again: built from
+ * the rule or category, file, line and title, so a tool can track a finding
+ * across runs.
+ */
+export function stableIds(list) {
+    const seen = new Map();
+    for (const f of list) {
+        const key = [f.ruleId ?? f.category, f.file ?? '', f.line ?? '', f.title.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim()].join('|');
+        let h = 0x811c9dc5;
+        for (let i = 0; i < key.length; i++)
+            h = Math.imul(h ^ key.charCodeAt(i), 0x01000193);
+        const base = `scr-${(h >>> 0).toString(36)}`;
+        const n = seen.get(base) ?? 0;
+        seen.set(base, n + 1);
+        f.id = n ? `${base}-${n + 1}` : base;
+    }
+}
 function sortFindings(list) {
     return list.sort((a, b) => SEVERITIES.indexOf(a.severity) - SEVERITIES.indexOf(b.severity) || (a.file ?? '').localeCompare(b.file ?? '') || (a.line ?? 0) - (b.line ?? 0));
 }
@@ -122,7 +140,7 @@ export async function review(input, opts = {}) {
     // Requirements and bugs.
     let context = [...(opts.context ?? [])];
     const connectors = context.length ? [...new Set(context.map(c => c.source))] : [];
-    if (opts.fetchContext !== false) {
+    if (opts.fetchContext !== false && !opts.offline) {
         progress('Looking for linked requirements and bugs');
         const got = await gatherContext(input, { env: opts.env ?? {}, repo: input.repo, connectors: opts.connectors, have: context.map(c => c.id) });
         context = [...context, ...got.items];
@@ -181,6 +199,7 @@ export async function review(input, opts = {}) {
         }
     }
     sortFindings(grouped);
+    stableIds(grouped);
     // File risk: size, how sensitive the file is, what was found, and the model's view.
     const aiFiles = new Map();
     for (const f of ai?.files ?? []) {
