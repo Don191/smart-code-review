@@ -11,6 +11,9 @@ import {
   notion,
   githubIssues,
   lineRule,
+  symbolChanges,
+  changeFacts,
+  flowDiagram,
   type LlmProvider,
   type ReviewPlugin
 } from '../src/index.ts'
@@ -161,4 +164,54 @@ test('groups files into modules', async () => {
   assert.equal(mono.modules.find(m => m.name === 'api')!.kind, 'backend')
   const custom = await review({ diff }, { fetchContext: false, modules: [{ name: 'Checkout', paths: ['app/', 'server/api/cart/'] }] })
   assert.ok(custom.modules.some(m => m.name === 'Checkout' && m.files.length === 4))
+})
+
+test('describes the change: functions, routes and template', () => {
+  const files = parseDiff(diff)
+  const cart = symbolChanges(files.find(f => f.path.endsWith('useCart.ts'))!)
+  assert.deepEqual(cart.filter(s => s.action === 'added').map(s => s.name).sort(), ['applyCode', 'remove', 'save'])
+  assert.equal(cart.find(s => s.name === 'useCart')?.action, 'changed')
+  const vue = symbolChanges(files.find(f => f.path.endsWith('CartSummary.vue'))!)
+  assert.ok(vue.some(s => s.kind === 'template' && s.action === 'changed'))
+  const routes = files.flatMap(changeFacts).filter(f => f.kind === 'route').map(f => f.label).sort()
+  assert.deepEqual(routes, ['GET /api/cart/discount', 'POST /api/cart'])
+})
+
+test('reads dependencies and env vars from the diff', () => {
+  const [pkg] = parseDiff(`diff --git a/package.json b/package.json
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+-  "version": "1.0.0",
++  "version": "1.1.0",
+   "dependencies": {
+-    "ink": "^5.0.0",
++    "zod": "^4.1.0",
+     "vue": "^3.5.0"
+   }
+`)
+  const facts = changeFacts(pkg!)
+  assert.deepEqual(facts.map(f => `${f.action} ${f.label}`).sort(), ['added zod', 'removed ink'])
+  const [src] = parseDiff(`diff --git a/a.ts b/a.ts
+--- a/a.ts
++++ b/a.ts
+@@ -1,1 +1,1 @@
+-const k = process.env.OLD_KEY
++const k = process.env.NEW_KEY
+`)
+  assert.deepEqual(changeFacts(src!).map(f => `${f.action} ${f.label}`), ['added NEW_KEY', 'removed OLD_KEY'])
+})
+
+test('the report has the change and the review as separate parts', async () => {
+  const r = await review({ diff, title: 'Saved carts' })
+  assert.ok(r.change.summary.length > 0)
+  assert.ok(r.change.effort >= 1 && r.change.effort <= 5)
+  const html = renderHtml(r)
+  assert.match(html, /id="part-change" checked/)
+  assert.match(html, /id="part-review"/)
+  assert.match(html, /class="sym"/)
+  const svg = flowDiagram([{ from: 'Page', to: 'API', label: 'posts <form>' }, { from: 'API', to: 'API', label: 'validates' }])
+  assert.match(svg, /posts &lt;form&gt;/)
+  assert.equal((svg.match(/class="fl-box"/g) ?? []).length, 2)
 })

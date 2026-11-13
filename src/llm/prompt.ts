@@ -6,8 +6,32 @@ export const AI_SCHEMA = {
   properties: {
     verdict: { type: 'string', enum: ['approve', 'comment', 'request-changes'] },
     risk: { type: 'integer', minimum: 0, maximum: 100, description: 'How risky it is to merge: 0 trivial, 100 likely to break production.' },
-    headline: { type: 'string', description: 'One plain sentence, at most 18 words: what the change does, then the main problem if any. E.g. "Adds CSV export, but large exports load every row into memory."' },
-    summary: { type: 'array', items: { type: 'string' }, maxItems: 3, description: 'The key changes, up to 3 short points. Each under 14 words. Say what the change does; problems belong in findings.' },
+    change: {
+      type: 'object',
+      description: 'A neutral description of what the change does. Facts only: no judgement, no problems, no praise.',
+      properties: {
+        summary: { type: 'string', description: 'One or two plain sentences, under 35 words, on what the change does and why, as a release note would say it.' },
+        points: { type: 'array', items: { type: 'string' }, maxItems: 4, description: 'The main things it changes, each under 12 words. Start with a verb: Adds, Changes, Removes, Moves.' },
+        effort: { type: 'integer', minimum: 1, maximum: 5, description: 'Time a careful reviewer needs: 1 = under 10 minutes, 3 = about an hour, 5 = most of a day.' },
+        flow: {
+          type: 'array',
+          maxItems: 8,
+          description: 'The main runtime path the change adds or alters, as calls between parts (user, components, composables, API routes, services, database). Empty if there is no flow, e.g. docs or config only.',
+          items: {
+            type: 'object',
+            properties: {
+              from: { type: 'string', description: 'Short name, e.g. "CartSummary", "useCart", "POST /api/cart", "Database", "User".' },
+              to: { type: 'string' },
+              label: { type: 'string', description: 'What is called or sent, under 6 words.' }
+            },
+            required: ['from', 'to', 'label']
+          }
+        }
+      },
+      required: ['summary', 'points', 'effort', 'flow']
+    },
+    headline: { type: 'string', description: 'The review in one plain sentence, under 16 words: is it ready, and the main problem if any.' },
+    summary: { type: 'array', items: { type: 'string' }, maxItems: 3, description: 'Up to 3 review notes, each under 14 words: the problems or risks that matter most.' },
     modules: {
       type: 'array',
       description: 'One entry per module listed under "Modules".',
@@ -15,10 +39,11 @@ export const AI_SCHEMA = {
         type: 'object',
         properties: {
           name: { type: 'string' },
-          summary: { type: 'string', description: 'What changed in this module, under 12 words. Say what it does now; problems belong in findings.' },
+          summary: { type: 'string', description: 'What changed in this module, under 14 words. Facts only, no judgement.' },
+          points: { type: 'array', items: { type: 'string' }, maxItems: 4, description: 'What changed here, each under 10 words, starting with a verb. Facts only.' },
           impact: { type: 'string', enum: ['high', 'medium', 'low'], description: 'How much this module\'s behaviour changes for users or other modules.' }
         },
-        required: ['name', 'summary', 'impact']
+        required: ['name', 'summary', 'points', 'impact']
       }
     },
     files: {
@@ -27,10 +52,23 @@ export const AI_SCHEMA = {
         type: 'object',
         properties: {
           path: { type: 'string' },
-          purpose: { type: 'string', description: 'What changed in this file, under 12 words.' },
+          purpose: { type: 'string', description: 'What changed in this file, under 12 words. Facts only.' },
           risk: { type: 'integer', minimum: 0, maximum: 100 }
         },
         required: ['path', 'purpose', 'risk']
+      }
+    },
+    symbols: {
+      type: 'array',
+      description: 'One entry per item under "Changed functions and components".',
+      items: {
+        type: 'object',
+        properties: {
+          file: { type: 'string' },
+          name: { type: 'string' },
+          change: { type: 'string', description: 'What changed in it, under 12 words. Facts only, e.g. "Now saves each item to /api/cart".' }
+        },
+        required: ['file', 'name', 'change']
       }
     },
     findings: {
@@ -69,10 +107,14 @@ export const AI_SCHEMA = {
       required: ['adequate']
     }
   },
-  required: ['verdict', 'risk', 'headline', 'summary', 'modules', 'files', 'findings', 'requirements', 'tests']
+  required: ['change', 'verdict', 'risk', 'headline', 'summary', 'modules', 'files', 'symbols', 'findings', 'requirements', 'tests']
 } as const
 
-export const SYSTEM_PROMPT = `You review code changes like a careful senior engineer.
+export const SYSTEM_PROMPT = `You describe and then review code changes, like a careful senior engineer.
+
+Your reply has two separate parts.
+1. The description: "change", "modules", "files" and "symbols". Say what the code now does, as plain facts. No judgement, no problems, no praise, no words like "critical", "broken", "improves" or "properly".
+2. The review: "verdict", "risk", "headline", "summary", "findings", "requirements" and "tests".
 
 Report only real problems in the changed lines: bugs, security holes, data loss, performance traps, missing tests for risky logic, accessibility failures, and requirements the change does not meet. Skip style preferences and anything a formatter or linter would fix. Do not praise. If the change is fine, say so and return few or no findings.
 
@@ -99,6 +141,7 @@ export function buildPrompt(args: {
   files: DiffFile[]
   roles: Record<string, string>
   modules: { name: string; files: string[] }[]
+  symbols?: { file: string; name: string; action: string }[]
   guidance: string[]
   ruleFindings: Finding[]
   context: ContextItem[]
@@ -132,6 +175,7 @@ export function buildPrompt(args: {
   }
 
   parts.push(`\n# Modules\n${args.modules.map(m => `- ${m.name}: ${m.files.slice(0, 12).join(', ')}${m.files.length > 12 ? ` and ${m.files.length - 12} more` : ''}`).join('\n')}`)
+  if (args.symbols?.length) parts.push(`\n# Changed functions and components\n${args.symbols.slice(0, 60).map(s => `- ${s.file}: ${s.name} (${s.action})`).join('\n')}`)
   parts.push(`\n# Files\n${files.map(f => `- ${f.path} (${roles[f.path] ?? 'file'}, ${f.status}, +${f.additions} -${f.deletions})`).join('\n')}`)
 
   // Biggest-risk files first, so if the diff is cut it's the low-value files that go.

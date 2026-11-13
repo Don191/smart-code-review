@@ -5,7 +5,7 @@ description: Review a branch or pull request with smart-code-review and its link
 
 # Code review with smart-code-review
 
-Produces a self-contained HTML report: verdict and risk first, then a risk map of the files, findings, and a check of each acceptance criterion from the linked tickets.
+Produces a self-contained HTML report in two parts. The change describes what the change does, area by area, down to each function. Review gives the verdict, risk, findings and a check of each acceptance criterion from the linked tickets.
 
 ## 1. Pick what to review
 
@@ -55,7 +55,7 @@ Needs `GEMINI_API_KEY` (free tier is fine) or `OPENAI_API_KEY`. Add `--provider 
 
 Read `reviews/review.json` and reply with:
 
-1. The verdict and risk score, and the headline.
+1. What the change does (`change.summary`), then the verdict, risk score and headline.
 2. Blockers and majors, one line each with `file:line`.
 3. Any acceptance criteria marked `missing` or `partial`.
 4. The path to the HTML report.

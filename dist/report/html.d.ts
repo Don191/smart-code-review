@@ -3,6 +3,8 @@ import { type Review, type Severity } from '../types.ts';
 export declare function sevIcon(s: Severity, size?: number): string;
 /** Green to amber to red. */
 export declare function riskColor(r: number): string;
+/** The main path through the change, as a sequence diagram. */
+export declare function flowDiagram(flow: NonNullable<Review['change']['flow']>): string;
 export interface RenderOptions {
     /** Include the review JSON in the page so tools can read it back. Default true. */
     embedData?: boolean;

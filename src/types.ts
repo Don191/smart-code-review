@@ -96,6 +96,28 @@ export interface RequirementCheck {
   files?: string[]
 }
 
+/** A function, class, method, type or template the diff adds, changes or removes. */
+export interface SymbolChange {
+  name: string
+  kind: 'function' | 'class' | 'method' | 'type' | 'template' | 'test'
+  action: 'added' | 'changed' | 'removed'
+  file: string
+  line?: number
+  /** What changed in it, in a few words. */
+  description?: string
+  /** The diff lines inside it. */
+  lines: DiffLine[]
+}
+
+/** Something the change does that matters outside its file. */
+export interface ChangeFact {
+  kind: 'route' | 'page' | 'component' | 'dependency' | 'env' | 'config' | 'migration'
+  action: 'added' | 'changed' | 'removed'
+  label: string
+  detail?: string
+  file: string
+}
+
 export type ModuleKind = 'frontend' | 'backend' | 'shared' | 'tests' | 'docs' | 'config'
 
 /** A high level part of the change: a workspace in a monorepo, or a layer such as frontend or backend. */
@@ -104,8 +126,10 @@ export interface ModuleSummary {
   kind: ModuleKind
   /** Path prefix, for workspaces. */
   root?: string
-  /** One short sentence on what changed here. */
+  /** One short sentence on what changed here, without judgement. */
   summary?: string
+  /** Short points on what changed here. */
+  points?: string[]
   impact: 'high' | 'medium' | 'low'
   /** 0 to 100. */
   risk: number
@@ -126,6 +150,8 @@ export interface FileSummary {
   additions: number
   deletions: number
   status: DiffFile['status']
+  symbols: SymbolChange[]
+  facts: ChangeFact[]
 }
 
 export interface ReviewMeta {
@@ -149,7 +175,19 @@ export interface Review {
   verdict: Verdict
   /** 0 to 100. */
   risk: number
+  /** What the change does, described without judgement. */
+  change: {
+    summary: string
+    points: string[]
+    facts: ChangeFact[]
+    /** How long a careful review would take: 1 (minutes) to 5 (hours). */
+    effort: number
+    /** The main path through the changed code, as steps between parts of the system. */
+    flow?: { from: string; to: string; label: string }[]
+  }
+  /** The review's one line assessment. */
   headline: string
+  /** Short review notes. */
   summary: string[]
   modules: ModuleSummary[]
   files: FileSummary[]
