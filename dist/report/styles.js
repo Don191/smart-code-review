@@ -292,6 +292,27 @@ footer{margin-top:32px;color:var(--muted);font-size:12px;text-align:center}
 .fact-group .fact{display:flex}
 .fg-name{font-size:12px;color:var(--muted)}
 .overview.later{margin-top:16px}
+.views{display:flex;flex-wrap:wrap}
+.views>input{position:absolute;opacity:0;pointer-events:none}
+.views>label{display:flex;cursor:pointer;padding:3px;background:var(--panel2);margin-bottom:16px}
+.views>label[for=cview-feature]{border-radius:10px 0 0 10px;padding-right:1px}
+.views>label[for=cview-area]{border-radius:0 10px 10px 0;padding-left:1px}
+.views .p-t{font-size:13px;padding:5px 14px;border-radius:8px}
+.views .p-t b{font-size:11px;font-weight:600;color:var(--muted);background:var(--panel2);border-radius:99px;padding:0 6px}
+.views>input:checked+label .p-t{background:var(--panel);color:var(--fg);box-shadow:0 1px 3px rgb(0 0 0/.08),0 0 0 1px var(--line)}
+.view{display:none;order:9;width:100%}
+#cview-feature:checked~[data-part=cview-feature],#cview-area:checked~[data-part=cview-area]{display:block}
+.f-num{flex:none;width:26px;height:26px;border-radius:8px;display:grid;place-items:center;font-size:13px;font-weight:700;background:color-mix(in srgb,var(--accent) 14%,transparent);color:var(--accent)}
+.f-areas{display:flex;flex-wrap:wrap;gap:4px 12px;margin-top:6px}
+.f-area{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--muted)}
+.f-area .sw{width:9px;height:9px}
+.f-marks{flex:none;display:flex;gap:8px;font-size:13px;font-weight:600;min-width:60px;justify-content:flex-end}
+.f-bar{display:block;height:4px;border-radius:99px;background:var(--panel2);margin-top:5px;overflow:hidden}
+.f-bar i{display:block;height:100%;background:var(--accent);border-radius:99px}
+.small{font-size:12px;margin:2px 0 6px}
+.list>*,.syms>*,.modules>*,.d-list>*,.s-body,.f-body,.m-body{min-width:0}
+.code{max-width:100%}
+main{overflow-x:clip}
 .decide{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:24px 28px;margin:0 0 28px}
 .d-ok{--dc:var(--met)}.d-warn{--dc:var(--minor)}.d-bad{--dc:var(--blocker)}
 .d-top{display:flex;gap:28px;align-items:center}

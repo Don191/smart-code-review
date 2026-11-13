@@ -1,0 +1,42 @@
+[
+  {
+    "source": "Azure DevOps",
+    "id": "AB#5102",
+    "kind": "requirement",
+    "title": "Pay with a gift card at checkout",
+    "status": "Active",
+    "url": "https://dev.azure.com/example/shop/_workitems/edit/5102",
+    "summary": "Shoppers can enter a gift card code at checkout and use its balance towards the order.",
+    "acceptanceCriteria": [
+      "A shopper can check a gift card's balance at checkout",
+      "The balance used can't be more than the order total",
+      "The card's balance goes down by the amount used, once, even if the order is placed twice at the same time",
+      "An unknown code shows a clear message"
+    ]
+  },
+  {
+    "source": "Azure DevOps",
+    "id": "AB#5110",
+    "kind": "requirement",
+    "title": "Order history for shoppers",
+    "status": "Active",
+    "url": "https://dev.azure.com/example/shop/_workitems/edit/5110",
+    "acceptanceCriteria": [
+      "A signed-in shopper sees their last 20 orders, newest first",
+      "Each order links to its detail page",
+      "Totals show in dollars"
+    ]
+  },
+  {
+    "source": "Notion",
+    "id": "Refunds spec",
+    "kind": "doc",
+    "title": "Staff refunds from the admin app",
+    "url": "https://www.notion.so/example/Refunds-spec",
+    "acceptanceCriteria": [
+      "Only staff can issue a refund",
+      "A refund can't be more than what was paid",
+      "The refund is sent to Stripe and the order is marked refunded"
+    ]
+  }
+]

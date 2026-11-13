@@ -288,11 +288,13 @@ function factItem(f: ChangeFact, withFile = false): string {
 }
 
 /** One file in "The change": what it is, then the functions and components it changes, then its diff. */
-function changeFile(f: FileSummary, d: DiffFile | undefined, root?: string): string {
+function changeFile(f: FileSummary, d: DiffFile | undefined, root?: string, only?: string[], idPrefix = 'c'): string {
   const st = FILE_STATUS[f.status]
   const hidden = NOT_SHOWN.includes(f.role)
-  const acts = (['added', 'changed', 'removed'] as const).map(a => [a, f.symbols.filter(y => y.action === a).length] as const).filter(([, n]) => n)
-  return `<details class="cfile" id="c${fileId(f.path)}" data-path="${esc(f.path)}">
+  const picked = only?.length ? f.symbols.filter(y => only.includes(y.name) || (y.kind === 'template' && only.some(o => /template/i.test(o)))) : []
+  const syms = picked.length ? picked : f.symbols
+  const acts = (['added', 'changed', 'removed'] as const).map(a => [a, syms.filter(y => y.action === a).length] as const).filter(([, n]) => n)
+  return `<details class="cfile" id="${idPrefix}${fileId(f.path)}" data-path="${esc(f.path)}">
     <summary>
       ${actIcon(fileAct(f.status))}
       <span class="path"><span class="dir">${esc(root && f.path.startsWith(root) ? dir(f.path).slice(root.length) : dir(f.path))}</span>${esc(base(f.path))}</span>
@@ -302,7 +304,7 @@ function changeFile(f: FileSummary, d: DiffFile | undefined, root?: string): str
     </summary>
     <div class="f-body">
       ${f.facts.length ? `<div class="facts-inline">${f.facts.map(x => factItem(x)).join('')}</div>` : ''}
-      ${f.symbols.length ? `<div class="syms">${f.symbols.map(symbolRow).join('')}</div>` : hidden ? `<p class="muted">${esc(f.role)}, not shown.</p>` : ''}
+      ${syms.length ? `<div class="syms">${syms.map(symbolRow).join('')}</div>${picked.length && picked.length < f.symbols.length ? `<p class="muted small">${f.symbols.length - picked.length} more in this file belong to other features.</p>` : ''}` : hidden ? `<p class="muted">${esc(f.role)}, not shown.</p>` : ''}
       ${d && d.hunks.length && !hidden ? `<details class="raw"><summary>Full diff</summary>${d.hunks.map(h => `<div class="hunk-h">@@ ${esc(h.header)}</div>${diffLines(h.lines)}`).join('')}</details>` : ''}
     </div>
   </details>`
@@ -387,6 +389,46 @@ function outside(facts: ChangeFact[]): string {
   return `<div class="panel"><h3>Outside the code</h3><div class="fact-groups">${groups.map(([k, l]) => `<div class="fact-group"><div class="fg-name">${FACT_GROUP[k]}</div>${l.map(f => factItem(f, true)).join('')}</div>`).join('')}</div></div>`
 }
 
+/** Large changes, grouped into the features or fixes they contain. */
+function changeFeatures(review: Review, diffByPath: Map<string, DiffFile>): string {
+  const features = review.change.features ?? []
+  const byPath = new Map(review.files.map(f => [f.path, f]))
+  const modKind = new Map(review.modules.map(m => [m.name, m.kind]))
+  const sizeOf = (paths: string[]) => paths.reduce((s, p) => { const f = byPath.get(p); return s + (f && !NOT_SHOWN.includes(f.role) ? f.additions + f.deletions : 0) }, 0)
+  const total = features.reduce((s, x) => s + sizeOf(x.files), 0) || 1
+  const rows = features.map((x, i) => {
+    const files = x.files.map(p => byPath.get(p)!).filter(Boolean)
+    const areas = [...new Set(files.map(f => f.module))]
+    const syms = files.flatMap(f => (x.symbols.length ? f.symbols.filter(y => x.symbols.includes(y.name)) : f.symbols))
+    const acts = (['added', 'changed', 'removed'] as const).map(a => [a, syms.filter(y => y.action === a).length] as const).filter(([, n]) => n)
+    // A finding counts for this feature when it falls in one of the feature's own functions, or the whole file is the feature's.
+    const owns = (f: Finding) => {
+      if (!f.file || !x.files.includes(f.file)) return false
+      const file = byPath.get(f.file)
+      const mine = file && x.symbols.length ? file.symbols.filter(y => x.symbols.includes(y.name)) : []
+      if (!mine.length || f.line === undefined) return true
+      return mine.some(y => y.lines.some(l => l.newLine === f.line))
+    }
+    const fs = review.findings.filter(f => f.severity !== 'nit' && owns(f))
+    const marks = SEVERITIES.map(s => fs.filter(y => y.severity === s).length ? `<span class="mk-n">${sevIcon(s, 12)}${fs.filter(y => y.severity === s).length}</span>` : '').join('')
+    const size = sizeOf(x.files)
+    const add = files.reduce((s, f) => s + f.additions, 0)
+    const del = files.reduce((s, f) => s + f.deletions, 0)
+    return `<details class="module feature" id="feat-${i}">
+      <summary>
+        <span class="f-num">${i + 1}</span>
+        <span class="m-main"><span class="m-name">${esc(x.name)}</span>${x.summary ? `<span class="m-sum">${esc(x.summary)}</span>` : ''}
+          <span class="f-areas">${areas.map(a => `<span class="f-area"><i class="sw k-${modKind.get(a) ?? 'shared'}"></i>${esc(a)}</span>`).join('')}</span></span>
+        <span class="m-acts">${counted(acts)}</span>
+        <span class="f-marks" title="Findings in these files">${marks}</span>
+        <span class="m-size">${plural(files.length, 'file')}<br><span class="plus">+${add}</span> <span class="minus">−${del}</span><span class="f-bar"><i style="width:${Math.max(3, (size / total) * 100)}%"></i></span></span>
+      </summary>
+      <div class="m-body"><div class="list">${files.map(f => changeFile(f, diffByPath.get(f.path), undefined, x.symbols, `f${i}-`)).join('')}</div></div>
+    </details>`
+  }).join('')
+  return `<div class="modules">${rows}</div>`
+}
+
 /** Part one: what the change does, stated as fact. */
 function changePart(review: Review, diffByPath: Map<string, DiffFile>, add: number, del: number): string {
   const c = review.change
@@ -415,7 +457,12 @@ function changePart(review: Review, diffByPath: Map<string, DiffFile>, add: numb
       <div class="facts">${chips}</div>
     </section>
     ${c.flow?.length ? `<div class="panel flow-panel"><h3>How it fits together</h3>${flowDiagram(c.flow)}</div>` : ''}
-    ${changeAreas(review, diffByPath)}
+    ${c.features?.length ? `<div class="views">
+      <input type="radio" name="cview" id="cview-feature" checked><label for="cview-feature"><span class="p-t">By feature <b>${c.features.length}</b></span></label>
+      <input type="radio" name="cview" id="cview-area"><label for="cview-area"><span class="p-t">By area <b>${review.modules.length}</b></span></label>
+      <div class="view" data-part="cview-feature">${changeFeatures(review, diffByPath)}</div>
+      <div class="view" data-part="cview-area">${changeAreas(review, diffByPath).replace('<h3>Areas changed</h3>', '')}</div>
+    </div>` : changeAreas(review, diffByPath)}
     <section class="overview${c.facts.length ? '' : ' one'} later">
       <div class="panel"><h3>Files</h3>${statusMap}<div class="legend">${(['added', 'changed', 'removed', 'renamed'] as const).map(s => `<span><i class="sw" style="background:var(--s-${s})"></i>${s[0]!.toUpperCase()}${s.slice(1)}</span>`).join('')}<span class="muted">Size: lines changed</span></div></div>
       ${outside(c.facts)}

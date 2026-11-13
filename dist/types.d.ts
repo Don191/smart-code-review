@@ -78,6 +78,14 @@ export interface SymbolChange {
     /** The diff lines inside it. */
     lines: DiffLine[];
 }
+/** One feature or fix inside a change, with the files and functions that make it up. */
+export interface Feature {
+    name: string;
+    summary?: string;
+    files: string[];
+    /** Names of the functions, components or templates that belong to it. Empty means the whole file. */
+    symbols: string[];
+}
 /** Something the change does that matters outside its file. */
 export interface ChangeFact {
     kind: 'route' | 'page' | 'component' | 'dependency' | 'env' | 'config' | 'migration' | 'agent';
@@ -146,6 +154,8 @@ export interface Review {
         facts: ChangeFact[];
         /** How long a careful review would take: 1 (minutes) to 5 (hours). */
         effort: number;
+        /** The separate features or fixes in the change, for large PRs. Files not in any are left out. */
+        features?: Feature[];
         /** The main path through the changed code, as steps between parts of the system. */
         flow?: {
             from: string;

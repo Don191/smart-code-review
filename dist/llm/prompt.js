@@ -11,6 +11,21 @@ export const AI_SCHEMA = {
                 summary: { type: 'string', description: 'One or two plain sentences, under 35 words, on what the change does and why, as a release note would say it.' },
                 points: { type: 'array', items: { type: 'string' }, maxItems: 4, description: 'The main things it changes, each under 12 words. Start with a verb: Adds, Changes, Removes, Moves.' },
                 effort: { type: 'integer', minimum: 1, maximum: 5, description: 'Time a careful reviewer needs: 1 = under 10 minutes, 3 = about an hour, 5 = most of a day.' },
+                features: {
+                    type: 'array',
+                    maxItems: 12,
+                    description: 'The separate features, fixes or chores the change contains, as a reader would name them, e.g. "Saved carts", "Discount codes", "Dependency upgrades", "Agent setup". One entry if the change does one thing. Chores are features too: dependency upgrades, a shared component change, agent setup. Every changed file goes in at least one, including tests and package.json files. A file shared by several features goes in each, with only that feature\'s functions in symbols.',
+                    items: {
+                        type: 'object',
+                        properties: {
+                            name: { type: 'string', description: 'Under 5 words.' },
+                            summary: { type: 'string', description: 'What it does, one sentence under 20 words. Facts only.' },
+                            files: { type: 'array', items: { type: 'string' } },
+                            symbols: { type: 'array', items: { type: 'string' }, description: 'Names from "Changed functions and components" that belong to this feature. Empty for whole files.' }
+                        },
+                        required: ['name', 'summary', 'files', 'symbols']
+                    }
+                },
                 flow: {
                     type: 'array',
                     maxItems: 8,
@@ -26,7 +41,7 @@ export const AI_SCHEMA = {
                     }
                 }
             },
-            required: ['summary', 'points', 'effort', 'flow']
+            required: ['summary', 'points', 'effort', 'features', 'flow']
         },
         headline: { type: 'string', description: 'The review in one plain sentence, under 16 words: is it ready, and the main problem if any.' },
         summary: { type: 'array', items: { type: 'string' }, maxItems: 3, description: 'Up to 3 review notes, each under 14 words: the problems or risks that matter most.' },
@@ -46,6 +61,7 @@ export const AI_SCHEMA = {
         },
         files: {
             type: 'array',
+            description: 'One entry for every changed file. Do not skip any.',
             items: {
                 type: 'object',
                 properties: {

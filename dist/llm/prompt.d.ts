@@ -34,6 +34,38 @@ export declare const AI_SCHEMA: {
                     readonly maximum: 5;
                     readonly description: "Time a careful reviewer needs: 1 = under 10 minutes, 3 = about an hour, 5 = most of a day.";
                 };
+                readonly features: {
+                    readonly type: "array";
+                    readonly maxItems: 12;
+                    readonly description: "The separate features, fixes or chores the change contains, as a reader would name them, e.g. \"Saved carts\", \"Discount codes\", \"Dependency upgrades\", \"Agent setup\". One entry if the change does one thing. Chores are features too: dependency upgrades, a shared component change, agent setup. Every changed file goes in at least one, including tests and package.json files. A file shared by several features goes in each, with only that feature's functions in symbols.";
+                    readonly items: {
+                        readonly type: "object";
+                        readonly properties: {
+                            readonly name: {
+                                readonly type: "string";
+                                readonly description: "Under 5 words.";
+                            };
+                            readonly summary: {
+                                readonly type: "string";
+                                readonly description: "What it does, one sentence under 20 words. Facts only.";
+                            };
+                            readonly files: {
+                                readonly type: "array";
+                                readonly items: {
+                                    readonly type: "string";
+                                };
+                            };
+                            readonly symbols: {
+                                readonly type: "array";
+                                readonly items: {
+                                    readonly type: "string";
+                                };
+                                readonly description: "Names from \"Changed functions and components\" that belong to this feature. Empty for whole files.";
+                            };
+                        };
+                        readonly required: readonly ["name", "summary", "files", "symbols"];
+                    };
+                };
                 readonly flow: {
                     readonly type: "array";
                     readonly maxItems: 8;
@@ -57,7 +89,7 @@ export declare const AI_SCHEMA: {
                     };
                 };
             };
-            readonly required: readonly ["summary", "points", "effort", "flow"];
+            readonly required: readonly ["summary", "points", "effort", "features", "flow"];
         };
         readonly headline: {
             readonly type: "string";
@@ -103,6 +135,7 @@ export declare const AI_SCHEMA: {
         };
         readonly files: {
             readonly type: "array";
+            readonly description: "One entry for every changed file. Do not skip any.";
             readonly items: {
                 readonly type: "object";
                 readonly properties: {
