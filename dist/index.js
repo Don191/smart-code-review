@@ -14,5 +14,5 @@ export { python } from "./plugins/others.js";
 export { agents } from "./plugins/agents.js";
 export { agentLabel, describeSymbol } from "./facts.js";
 export { gatherContext, parseContext, criteriaFrom, BUILT_IN_CONNECTORS, azureDevOps, notion, githubIssues, jira } from "./connectors/index.js";
-export { gemini, vertex, openai, providerFromEnv, openaiKeyFrom, geminiKeyFrom } from "./llm/providers.js";
+export { claude, strictSchema, gemini, vertex, openai, providerFromEnv, openaiKeyFrom, geminiKeyFrom } from "./llm/providers.js";
 export { fromGitHubPr, parsePrUrl } from "./sources/github.js";
