@@ -2,6 +2,7 @@ import { addedLines, parseDiff } from "./diff.js";
 import { gatherContext } from "./connectors/index.js";
 import { AI_SCHEMA, SYSTEM_PROMPT, buildPrompt, criteriaOf, parseJson } from "./llm/prompt.js";
 import { lockfile } from "./plugins/others.js";
+import { changeFacts, symbolChanges } from "./facts.js";
 import { looksLikeMonorepo, moduleOf } from "./modules.js";
 import { PluginRegistry } from "./plugins/registry.js";
 import { SEVERITIES } from "./types.js";
@@ -68,7 +69,9 @@ export async function review(input, opts = {}) {
             risk: 0,
             additions: f.additions,
             deletions: f.deletions,
-            status: f.status
+            status: f.status,
+            symbols: lockfile(f.path) || GENERATED.test(f.path) || f.binary ? [] : symbolChanges(f),
+            facts: f.binary ? [] : changeFacts(f)
         });
         if (skip.has(f.path) || f.status === 'deleted')
             continue;
@@ -134,7 +137,7 @@ export async function review(input, opts = {}) {
             .filter(f => !skip.has(f.path))
             .sort((a, b) => (b.additions + b.deletions) * (1 + Math.max(0, roleRiskOf(roles[b.path]))) - (a.additions + a.deletions) * (1 + Math.max(0, roleRiskOf(roles[a.path]))));
         const modList = [...moduleInfo.keys()].map(name => ({ name, files: [...summaries.values()].filter(s => s.module === name).map(s => s.path) }));
-        const { prompt, truncated } = buildPrompt({ input, files: reviewable, roles, modules: modList, guidance: [...guidance], ruleFindings: grouped, context, extraInstructions: opts.instructions });
+        const { prompt, truncated } = buildPrompt({ input, files: reviewable, roles, modules: modList, symbols: [...summaries.values()].flatMap(s => s.symbols.map(y => ({ file: s.path, name: y.name, action: y.action }))), guidance: [...guidance], ruleFindings: grouped, context, extraInstructions: opts.instructions });
         if (truncated.length)
             warnings.push(`The diff was too long, so ${truncated.length} file${truncated.length > 1 ? 's were' : ' was'} not sent to the model: ${truncated.slice(0, 5).join(', ')}${truncated.length > 5 ? '…' : ''}`);
         try {
@@ -196,6 +199,11 @@ export async function review(input, opts = {}) {
         const computed = clamp(size + roleW + found);
         const a = aiFiles.get(s.path);
         s.purpose = a?.purpose;
+        for (const y of s.symbols) {
+            const d = (ai?.symbols ?? []).find((x) => x?.name === y.name && resolvePath(x.file, paths) === s.path);
+            if (typeof d?.change === 'string')
+                y.description = d.change;
+        }
         s.risk = a?.risk !== undefined && Number.isFinite(a.risk) ? clamp(computed * 0.5 + a.risk * 0.5) : computed;
         if (grouped.some(g => g.file === s.path && g.severity === 'blocker'))
             s.risk = Math.max(s.risk, 85);
@@ -218,6 +226,7 @@ export async function review(input, opts = {}) {
             kind: info.kind,
             root: info.root,
             summary: typeof a?.summary === 'string' ? a.summary : undefined,
+            points: Array.isArray(a?.points) ? a.points.slice(0, 4).map(String) : undefined,
             impact,
             risk,
             files: fs.map(f => f.path),
@@ -283,6 +292,13 @@ export async function review(input, opts = {}) {
             plugins: [...usedPlugins],
             connectors: [...new Set(connectors)]
         },
+        change: {
+            summary: typeof ai?.change?.summary === 'string' ? ai.change.summary : describeChange(files, modules),
+            points: Array.isArray(ai?.change?.points) ? ai.change.points.slice(0, 4).map(String) : [],
+            facts: files.flatMap(f => f.facts),
+            effort: Number.isInteger(ai?.change?.effort) && ai.change.effort >= 1 && ai.change.effort <= 5 ? ai.change.effort : effortFromSize(files),
+            flow: Array.isArray(ai?.change?.flow) ? ai.change.flow.filter((s) => s?.from && s?.to).slice(0, 8).map((s) => ({ from: String(s.from).slice(0, 40), to: String(s.to).slice(0, 40), label: String(s.label ?? '').slice(0, 60) })) : undefined
+        },
         verdict,
         risk,
         headline,
@@ -296,6 +312,19 @@ export async function review(input, opts = {}) {
         diff,
         warnings
     };
+}
+/** Review effort from the size of the change, when the model gives none. */
+function effortFromSize(files) {
+    const n = files.filter(f => !['Lockfile', 'Generated', 'Binary'].includes(f.role)).reduce((s, f) => s + f.additions + f.deletions, 0);
+    return n < 50 ? 1 : n < 200 ? 2 : n < 500 ? 3 : n < 1200 ? 4 : 5;
+}
+/** A plain description for when there's no AI: what was touched, by area. */
+function describeChange(files, modules) {
+    const added = files.filter(f => f.status === 'added').length;
+    const removed = files.filter(f => f.status === 'deleted').length;
+    const changed = files.length - added - removed;
+    const parts = [changed && `changes ${changed} file${changed > 1 ? 's' : ''}`, added && `adds ${added}`, removed && `removes ${removed}`].filter(Boolean);
+    return `This change ${parts.join(', ')} across ${modules.map(m => m.name).join(', ')}.`;
 }
 /** Rough check that two titles are about the same thing. */
 function sameTopic(a, b) {

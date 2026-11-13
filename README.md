@@ -1,16 +1,28 @@
 # smart-code-review
 
-AI code review that writes a visual HTML report. The report opens on the verdict and a risk score, and you click through for more detail only where you need it.
+AI code review that writes a visual HTML report. The report has two parts, and each opens on a short summary that you click through for more detail only where you need it.
 
-![A review report: verdict, risk gauge, findings, requirements and a risk map of the changed files](docs/report.png)
+![The change part of a report: a summary, a diagram of how the parts call each other, and the areas changed opened down to a function's code](docs/report.png)
 
-- **Summary first.** A verdict, a risk gauge, one headline sentence on what the change does, and up to three key changes.
-- **Then the areas it touches.** One short section per module: each workspace in a monorepo (portal, api, ui...) or each layer (frontend, backend, shared, tests, config). Each says what changed there, its impact and its findings, and opens to list its files.
-- **Then where to look.** A map of the changed files sized by lines changed and coloured by risk, the three findings to read first, and a grid of findings by kind.
-- **Then the detail.** Each finding opens to show the lines it is about and a suggested change. Each file opens to show its findings and diff. Each requirement opens to show the evidence.
+**The change** describes what the change does, without judgement.
+
+- **Summary first.** What the change does in one sentence, the main points, and counts: files, areas, functions added, changed and removed, API routes, dependencies, environment variables, and how long it will take to review.
+- **How it fits together.** A diagram of the main path through the change, from the UI to the API, for example.
+- **Areas changed.** One short section per module: each workspace in a monorepo (portal, api, ui...) or each layer (frontend, backend, shared, tests, config). Each opens to its files, each file to the functions, components and templates it changes, and each of those to its lines.
+- **Outside the code.** API routes, pages, dependencies, environment variables, config keys and migrations that were added, changed or removed.
+
+**Review** gives the reviewer's assessment.
+
+- **Verdict first.** A verdict, a risk score and one sentence, then findings by severity, requirements met, tests and size.
+- **Impact by area.** The same areas, with their impact and findings.
+- **Where to look.** A map of the changed files coloured by risk, the three findings to read first, and a grid of findings by kind.
+- **The detail.** Each finding opens to show the lines it is about and a suggested change. Each requirement opens to show the evidence.
+
+It also:
+
 - **Knows what the change was for.** Linked Azure DevOps work items, Notion pages, GitHub issues and Jira tickets are fetched, and every acceptance criterion is checked against the diff.
-- **Built for JS, TS, Vue, Node and Nuxt**, with plugins for other languages.
-- **One file.** The report has no external assets, so it can be attached to a CI run, emailed or opened offline.
+- **Is built for JS, TS, Vue, Node and Nuxt**, with plugins for other languages.
+- **Is one file.** The report has no external assets, so it can be attached to a CI run, emailed or opened offline.
 
 Sample reports: [saved carts (planted problems, with requirements)](examples/saved-carts.html) and [a real change from webcontainers-demo](examples/webcontainers-tui.html). Download and open them in a browser.
 

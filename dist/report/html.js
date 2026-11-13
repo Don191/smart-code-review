@@ -109,19 +109,19 @@ function findingRow(f, files) {
   </div>
 </details>`;
 }
-function fileTiles(files, counts, box, W, H) {
+function fileTiles(files, counts, box, W, H, style) {
     return squarify(files.map(f => ({ item: f, value: f.additions + f.deletions + 6 })), box.w, box.h).map(({ item: f, x, y, w, h }) => {
         const fs = counts.get(f.path) ?? [];
         const small = w < 90 || h < 46;
         const tiny = w < 46 || h < 26;
-        const marks = SEVERITIES.flatMap(s => fs.filter(x => x.severity === s).slice(0, 4).map(() => sevIcon(s, 10))).slice(0, 6).join('');
-        return `<button class="tile${small ? ' small' : ''}${tiny ? ' tiny' : ''}" data-open-file="${esc(f.path)}" style="left:${((box.x + x) / W) * 100}%;top:${((box.y + y) / H) * 100}%;width:${(w / W) * 100}%;height:${(h / H) * 100}%;--rc:${riskColor(f.risk)}" title="${esc(f.path)} · risk ${f.risk} · +${f.additions} −${f.deletions}${fs.length ? ` · ${fs.length} finding${fs.length > 1 ? 's' : ''}` : ''}">
+        const marks = style ? '' : SEVERITIES.flatMap(s => fs.filter(x => x.severity === s).slice(0, 4).map(() => sevIcon(s, 10))).slice(0, 6).join('');
+        return `<button class="tile${small ? ' small' : ''}${tiny ? ' tiny' : ''}" ${style ? style.open : 'data-open-file'}="${esc(f.path)}" style="left:${((box.x + x) / W) * 100}%;top:${((box.y + y) / H) * 100}%;width:${(w / W) * 100}%;height:${(h / H) * 100}%;--rc:${style ? style.color(f) : riskColor(f.risk)}" title="${esc(style ? style.title(f) : `${f.path} · risk ${f.risk} · +${f.additions} −${f.deletions}${fs.length ? ` · ${fs.length} finding${fs.length > 1 ? 's' : ''}` : ''}`)}">
       ${tiny ? '' : `<span class="t-name">${esc(base(f.path))}</span><span class="t-marks">${marks}</span>`}
     </button>`;
     }).join('');
 }
-/** Files grouped by module, sized by lines changed and coloured by risk. */
-function treemap(review) {
+/** Files grouped by module, sized by lines changed and coloured by risk (or by `style`). */
+function treemap(review, style) {
     const live = review.files.filter(f => f.role !== 'Lockfile' && f.role !== 'Generated' && f.role !== 'Binary');
     const W = 1000;
     const H = 320;
@@ -135,16 +135,18 @@ function treemap(review) {
         .filter(g => g.files.length);
     const out = [];
     if (groups.length < 2) {
-        out.push(fileTiles(live, counts, { x: 0, y: 0, w: W, h: H }, W, H));
+        out.push(fileTiles(live, counts, { x: 0, y: 0, w: W, h: H }, W, H, style));
     }
     else {
         for (const { item: g, x, y, w, h } of squarify(groups.map(g => ({ item: g, value: g.files.reduce((s, f) => s + f.additions + f.deletions + 6, 0) })), W, H)) {
             const pad = 3;
             out.push(`<div class="group" style="left:${(x / W) * 100}%;top:${(y / H) * 100}%;width:${(w / W) * 100}%;height:${(h / H) * 100}%"><span class="g-name">${esc(g.m.name)}</span></div>`);
             if (h > LABEL + 12)
-                out.push(fileTiles(g.files, counts, { x: x + pad, y: y + LABEL, w: w - pad * 2, h: h - LABEL - pad }, W, H));
+                out.push(fileTiles(g.files, counts, { x: x + pad, y: y + LABEL, w: w - pad * 2, h: h - LABEL - pad }, W, H, style));
         }
     }
+    if (style)
+        return `<div class="treemap" role="group" aria-label="Changed files grouped by area, sized by lines changed">${out.join('')}</div>`;
     return `<div class="treemap" role="group" aria-label="Changed files grouped by module, sized by lines changed and coloured by risk">${out.join('')}</div>
   <div class="legend"><span>Size: lines changed</span><span class="scale"><i style="background:${riskColor(5)}"></i><i style="background:${riskColor(40)}"></i><i style="background:${riskColor(65)}"></i><i style="background:${riskColor(95)}"></i></span><span>Colour: risk</span></div>`;
 }
@@ -187,7 +189,7 @@ function areas(review, diffByPath) {
       </div>
     </details>`;
     }).join('');
-    return `<section class="areas"><h3>Areas changed</h3><div class="strip">${strip}</div><div class="modules">${rows}</div></section>`;
+    return `<section class="areas"><h3>Impact by area</h3><div class="strip">${strip}</div><div class="modules">${rows}</div></section>`;
 }
 const slug = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-');
 function reqStrip(review) {
@@ -222,6 +224,169 @@ function bar(add, del, maxTotal) {
     const w = 90;
     const scale = maxTotal ? w / maxTotal : 0;
     return `<span class="churn" title="+${add} −${del}"><i class="a" style="width:${Math.max(add ? 2 : 0, add * scale)}px"></i><i class="d" style="width:${Math.max(del ? 2 : 0, del * scale)}px"></i></span>`;
+}
+const NOT_SHOWN = ['Lockfile', 'Generated', 'Binary'];
+const ACTION_LABEL = { added: 'Added', changed: 'Changed', removed: 'Removed' };
+const FILE_STATUS = {
+    added: { label: 'Added', cls: 'added' },
+    modified: { label: 'Changed', cls: 'changed' },
+    deleted: { label: 'Removed', cls: 'removed' },
+    renamed: { label: 'Renamed', cls: 'renamed' }
+};
+const SYM_KIND = { function: 'Function', class: 'Class', method: 'Method', type: 'Type', template: 'Template', test: 'Test' };
+const FACT_GROUP = {
+    route: 'API routes',
+    page: 'Pages',
+    component: 'Components',
+    dependency: 'Dependencies',
+    env: 'Environment variables',
+    config: 'Config',
+    migration: 'Migrations'
+};
+const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
+function symbolRow(y) {
+    return `<details class="sym">
+    <summary><span class="act act-${y.action}">${ACTION_LABEL[y.action]}</span><span class="s-kind">${SYM_KIND[y.kind]}</span><code class="s-name">${esc(y.kind === 'template' ? '<template>' : y.name)}</code><span class="s-desc">${y.description ? esc(y.description) : `<span class="plus">+${y.lines.filter(l => l.type === 'add').length}</span> <span class="minus">−${y.lines.filter(l => l.type === 'del').length}</span>`}</span>${y.line ? `<span class="loc">line ${y.line}</span>` : ''}</summary>
+    <div class="s-body">${y.lines.length ? diffLines(y.lines) : '<p class="muted">No lines to show.</p>'}</div>
+  </details>`;
+}
+function factItem(f, withFile = false) {
+    return `<a class="fact" href="#c${fileId(f.file)}" data-open-cfile="${esc(f.file)}"><span class="act act-${f.action}">${ACTION_LABEL[f.action]}</span><code>${esc(f.label)}</code>${f.detail ? `<span class="muted">${esc(f.detail)}</span>` : ''}${withFile ? `<span class="loc">${esc(base(f.file))}</span>` : ''}</a>`;
+}
+/** One file in "The change": what it is, then the functions and components it changes, then its diff. */
+function changeFile(f, d, root) {
+    const st = FILE_STATUS[f.status];
+    const hidden = NOT_SHOWN.includes(f.role);
+    const acts = ['added', 'changed', 'removed'].map(a => [a, f.symbols.filter(y => y.action === a).length]).filter(([, n]) => n);
+    return `<details class="cfile" id="c${fileId(f.path)}" data-path="${esc(f.path)}">
+    <summary>
+      <span class="st-badge st-${st.cls}">${st.label}</span>
+      <span class="path"><span class="dir">${esc(root && f.path.startsWith(root) ? dir(f.path).slice(root.length) : dir(f.path))}</span>${esc(base(f.path))}</span>
+      <span class="m-purpose">${esc(f.purpose ?? f.role)}</span>
+      <span class="sym-n">${acts.map(([a, n]) => `<i class="dotn act-${a}" title="${n} ${a}">${n}</i>`).join('')}</span>
+      <span class="m-size"><span class="plus">+${f.additions}</span> <span class="minus">−${f.deletions}</span></span>
+    </summary>
+    <div class="f-body">
+      ${f.facts.length ? `<div class="facts-inline">${f.facts.map(x => factItem(x)).join('')}</div>` : ''}
+      ${f.symbols.length ? `<div class="syms">${f.symbols.map(symbolRow).join('')}</div>` : hidden ? `<p class="muted">${esc(f.role)}, not shown.</p>` : ''}
+      ${d && d.hunks.length && !hidden ? `<details class="raw"><summary>Full diff</summary>${d.hunks.map(h => `<div class="hunk-h">@@ ${esc(h.header)}</div>${diffLines(h.lines)}`).join('')}</details>` : ''}
+    </div>
+  </details>`;
+}
+/** The areas the change touches, coloured by kind: one section per module, drilling down to files and functions. */
+function changeAreas(review, diffByPath) {
+    const sized = new Map(review.modules.map(m => [m.name, review.files.filter(f => f.module === m.name && !NOT_SHOWN.includes(f.role)).reduce((s, f) => s + f.additions + f.deletions, 0) + 2]));
+    const total = [...sized.values()].reduce((a, b) => a + b, 0) || 1;
+    const strip = review.modules.map(m => {
+        const pct = (sized.get(m.name) / total) * 100;
+        return `<a class="seg k-${m.kind}" href="#cmod-${slug(m.name)}" data-target="cmod-${slug(m.name)}" style="flex:${Math.max(pct, 4)}" title="${esc(m.name)} · ${plural(m.files.length, 'file')} · +${m.additions} −${m.deletions}">${pct > 9 ? `<span>${esc(m.name)}</span>` : ''}</a>`;
+    }).join('');
+    const kinds = [...new Set(review.modules.map(m => m.kind))];
+    const rows = review.modules.map(m => {
+        const files = review.files.filter(f => f.module === m.name);
+        const syms = files.flatMap(f => f.symbols);
+        const acts = ['added', 'changed', 'removed'].map(a => [a, syms.filter(y => y.action === a).length]).filter(([, n]) => n);
+        return `<details class="module" id="cmod-${slug(m.name)}">
+      <summary>
+        ${kindIcon(m.kind)}
+        <span class="m-main"><span class="m-name">${esc(m.name)}${m.root ? ` <span class="m-root">${esc(m.root)}</span>` : ''}</span>${m.summary ? `<span class="m-sum">${esc(m.summary)}</span>` : ''}</span>
+        <span class="m-acts">${acts.map(([a, n]) => `<span class="act act-${a}">${n} ${a}</span>`).join('')}</span>
+        <span class="m-size">${plural(files.length, 'file')}<br><span class="plus">+${m.additions}</span> <span class="minus">−${m.deletions}</span></span>
+      </summary>
+      <div class="m-body">
+        ${m.points?.length ? `<ul class="keys">${m.points.map(p => `<li>${esc(p)}</li>`).join('')}</ul>` : ''}
+        <div class="list">${files.map(f => changeFile(f, diffByPath.get(f.path), m.root)).join('')}</div>
+      </div>
+    </details>`;
+    }).join('');
+    return `<section class="areas"><h3>Areas changed</h3><div class="strip">${strip}</div>
+  <div class="legend kinds">${kinds.map(k => `<span><i class="sw k-${k}"></i>${KIND_LABEL[k]}</span>`).join('')}<span class="muted">Width: lines changed</span></div>
+  <div class="modules">${rows}</div></section>`;
+}
+/** The main path through the change, as a sequence diagram. */
+export function flowDiagram(flow) {
+    if (!flow.length)
+        return '';
+    const parts = [];
+    for (const s of flow)
+        for (const p of [s.from, s.to])
+            if (!parts.includes(p))
+                parts.push(p);
+    const W = 1000;
+    const col = W / parts.length;
+    const cx = (p) => col * parts.indexOf(p) + col / 2;
+    const top = 46;
+    const row = 48;
+    const H = top + 18 + flow.length * row;
+    const max = Math.max(8, Math.floor(col / 8.5));
+    const cut = (t, n) => (t.length > n ? `${t.slice(0, n - 1)}…` : t);
+    const heads = parts.map(p => {
+        const x = cx(p);
+        const w = Math.min(col - 16, Math.max(90, cut(p, max).length * 8.4 + 24));
+        return `<line x1="${x}" y1="${top}" x2="${x}" y2="${H}" class="fl-life"/><rect x="${x - w / 2}" y="6" width="${w}" height="36" rx="8" class="fl-box"/><text x="${x}" y="29" class="fl-name">${esc(cut(p, max))}</text>`;
+    }).join('');
+    const steps = flow.map((s, i) => {
+        const y = top + 18 + i * row + 26;
+        const x1 = cx(s.from);
+        const x2 = cx(s.to);
+        const num = `<circle cx="${x1}" cy="${y}" r="9" class="fl-num"/><text x="${x1}" y="${y + 4}" class="fl-numt">${i + 1}</text>`;
+        if (s.from === s.to) {
+            return `<path d="M${x1 + 9} ${y - 4} h34 v14 h-28" class="fl-arrow" marker-end="url(#fl-head)"/>${num}<text x="${x1 + 52}" y="${y + 4}" class="fl-label" text-anchor="start">${esc(cut(s.label, 60))}</text>`;
+        }
+        const dir = x2 > x1 ? 1 : -1;
+        const room = Math.max(12, Math.floor(Math.abs(x2 - x1) / 7));
+        return `<line x1="${x1 + dir * 10}" y1="${y}" x2="${x2 - dir * 3}" y2="${y}" class="fl-arrow" marker-end="url(#fl-head)"/>${num}<text x="${(x1 + x2) / 2}" y="${y - 8}" class="fl-label">${esc(cut(s.label, room))}</text>`;
+    }).join('');
+    return `<div class="flow-wrap"><svg class="flow" viewBox="0 0 ${W} ${H}" role="img" aria-label="How the parts of the change call each other">
+  <defs><marker id="fl-head" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="fl-tip"/></marker></defs>
+  ${heads}${steps}
+  <title>${esc(flow.map((s, i) => `${i + 1}. ${s.from} → ${s.to}: ${s.label}`).join('\n'))}</title>
+</svg></div>`;
+}
+function effortPips(n) {
+    const word = ['', 'Quick', 'Short', 'Medium', 'Long', 'Very long'][n] ?? '';
+    return `<span class="pips" title="Review effort ${n} of 5">${[1, 2, 3, 4, 5].map(i => `<i class="${i <= n ? 'on' : ''}"></i>`).join('')}</span><span>${word} to review</span>`;
+}
+/** Routes, pages, dependencies, settings: what the change does outside its own files. */
+function outside(facts) {
+    if (!facts.length)
+        return '';
+    const groups = Object.keys(FACT_GROUP).map(k => [k, facts.filter(f => f.kind === k)]).filter(([, l]) => l.length);
+    return `<div class="panel"><h3>Outside the code</h3><div class="fact-groups">${groups.map(([k, l]) => `<div class="fact-group"><div class="fg-name">${FACT_GROUP[k]}</div>${l.map(f => factItem(f, true)).join('')}</div>`).join('')}</div></div>`;
+}
+/** Part one: what the change does, stated as fact. */
+function changePart(review, diffByPath, add, del) {
+    const c = review.change;
+    const syms = review.files.flatMap(f => f.symbols).filter(y => y.kind !== 'template' && y.kind !== 'test');
+    const tests = review.files.flatMap(f => f.symbols).filter(y => y.kind === 'test');
+    const n = (a) => syms.filter(y => y.action === a).length;
+    const count = (k) => c.facts.filter(f => f.kind === k).length;
+    const chips = [
+        `<span class="chip-f"><b>${review.diff.length}</b> file${review.diff.length === 1 ? '' : 's'} <span class="plus">+${add}</span> <span class="minus">−${del}</span></span>`,
+        `<span class="chip-f"><b>${review.modules.length}</b> area${review.modules.length === 1 ? '' : 's'}</span>`,
+        syms.length ? `<span class="chip-f">${n('added') ? `<span class="act act-added">${n('added')} added</span>` : ''}${n('changed') ? `<span class="act act-changed">${n('changed')} changed</span>` : ''}${n('removed') ? `<span class="act act-removed">${n('removed')} removed</span>` : ''} functions and types</span>` : '',
+        tests.length ? `<span class="chip-f"><b>${tests.length}</b> test${tests.length === 1 ? '' : 's'}</span>` : '',
+        count('route') ? `<span class="chip-f"><b>${count('route')}</b> API route${count('route') === 1 ? '' : 's'}</span>` : '',
+        count('dependency') ? `<span class="chip-f"><b>${count('dependency')}</b> dependenc${count('dependency') === 1 ? 'y' : 'ies'}</span>` : '',
+        count('env') ? `<span class="chip-f"><b>${count('env')}</b> env var${count('env') === 1 ? '' : 's'}</span>` : '',
+        `<span class="chip-f">${effortPips(c.effort)}</span>`
+    ].filter(Boolean).join('');
+    const statusMap = treemap(review, {
+        color: f => `var(--s-${FILE_STATUS[f.status].cls})`,
+        title: f => `${f.path} · ${FILE_STATUS[f.status].label.toLowerCase()} · +${f.additions} −${f.deletions}${f.symbols.length ? ` · ${f.symbols.map(y => y.name).slice(0, 6).join(', ')}` : ''}`,
+        open: 'data-open-cfile'
+    });
+    return `<section class="hero">
+      <p class="c-sum">${esc(c.summary)}</p>
+      ${c.points.length ? `<ul class="keys">${c.points.map(p => `<li>${esc(p)}</li>`).join('')}</ul>` : ''}
+      <div class="facts">${chips}</div>
+    </section>
+    ${c.flow?.length ? `<div class="panel flow-panel"><h3>How it fits together</h3>${flowDiagram(c.flow)}</div>` : ''}
+    ${changeAreas(review, diffByPath)}
+    <section class="overview${c.facts.length ? '' : ' one'} later">
+      <div class="panel"><h3>Files</h3>${statusMap}<div class="legend">${['added', 'changed', 'removed', 'renamed'].map(s => `<span><i class="sw" style="background:var(--s-${s})"></i>${s[0].toUpperCase()}${s.slice(1)}</span>`).join('')}<span class="muted">Size: lines changed</span></div></div>
+      ${outside(c.facts)}
+    </section>`;
 }
 /** Renders a review as one self-contained HTML page. */
 export function renderHtml(review, opts = {}) {
@@ -311,6 +476,13 @@ export function renderHtml(review, opts = {}) {
     <button class="theme" type="button" aria-label="Switch light and dark" data-theme-toggle><svg width="16" height="16" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 1.5a6.5 6.5 0 0 1 0 13z" fill="currentColor"/></svg></button>
   </header>
 
+  <div class="parts">
+    <input type="radio" name="part" id="part-change" checked><label for="part-change"><span class="p-t">The change</span><span class="p-s">What it does, area by area</span></label>
+    <input type="radio" name="part" id="part-review"><label for="part-review" class="v-${v.cls}"><span class="p-t">Review <span class="pill">${v.label}</span></span><span class="p-s">Risk, issues and requirements</span></label>
+    <div class="part" data-part="part-change">
+    ${changePart(review, diffByPath, add, del)}
+    </div>
+    <div class="part" data-part="part-review">
   <section class="verdict v-${v.cls}" aria-label="Verdict">
     <div class="g">${gauge(review.risk)}</div>
     <div class="v-text">
@@ -320,10 +492,9 @@ export function renderHtml(review, opts = {}) {
     </div>
   </section>
 
+  ${signals}
   ${areas(review, diffByPath)}
 
-  <h2 class="level">Details</h2>
-  ${signals}
 
   <section class="overview${topList.length ? '' : ' one'}">
     <div class="panel"><h3>Where the risk is</h3>${treemap(review)}</div>
@@ -344,6 +515,8 @@ export function renderHtml(review, opts = {}) {
     <div class="tab-body" data-for="tab-req">${reqTab}</div>
     <div class="tab-body" data-for="tab-about">${aboutTab}</div>
   </section>
+    </div>
+  </div>
   <footer>Made with smart-code-review</footer>
 </main>
 ${opts.embedData === false ? '' : `<script type="application/json" id="review-data">${JSON.stringify({ ...review, diff: undefined }).replace(/</g, '\\u003c')}</script>`}

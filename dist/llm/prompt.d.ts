@@ -12,9 +12,56 @@ export declare const AI_SCHEMA: {
             readonly maximum: 100;
             readonly description: "How risky it is to merge: 0 trivial, 100 likely to break production.";
         };
+        readonly change: {
+            readonly type: "object";
+            readonly description: "A neutral description of what the change does. Facts only: no judgement, no problems, no praise.";
+            readonly properties: {
+                readonly summary: {
+                    readonly type: "string";
+                    readonly description: "One or two plain sentences, under 35 words, on what the change does and why, as a release note would say it.";
+                };
+                readonly points: {
+                    readonly type: "array";
+                    readonly items: {
+                        readonly type: "string";
+                    };
+                    readonly maxItems: 4;
+                    readonly description: "The main things it changes, each under 12 words. Start with a verb: Adds, Changes, Removes, Moves.";
+                };
+                readonly effort: {
+                    readonly type: "integer";
+                    readonly minimum: 1;
+                    readonly maximum: 5;
+                    readonly description: "Time a careful reviewer needs: 1 = under 10 minutes, 3 = about an hour, 5 = most of a day.";
+                };
+                readonly flow: {
+                    readonly type: "array";
+                    readonly maxItems: 8;
+                    readonly description: "The main runtime path the change adds or alters, as calls between parts (user, components, composables, API routes, services, database). Empty if there is no flow, e.g. docs or config only.";
+                    readonly items: {
+                        readonly type: "object";
+                        readonly properties: {
+                            readonly from: {
+                                readonly type: "string";
+                                readonly description: "Short name, e.g. \"CartSummary\", \"useCart\", \"POST /api/cart\", \"Database\", \"User\".";
+                            };
+                            readonly to: {
+                                readonly type: "string";
+                            };
+                            readonly label: {
+                                readonly type: "string";
+                                readonly description: "What is called or sent, under 6 words.";
+                            };
+                        };
+                        readonly required: readonly ["from", "to", "label"];
+                    };
+                };
+            };
+            readonly required: readonly ["summary", "points", "effort", "flow"];
+        };
         readonly headline: {
             readonly type: "string";
-            readonly description: "One plain sentence, at most 18 words: what the change does, then the main problem if any. E.g. \"Adds CSV export, but large exports load every row into memory.\"";
+            readonly description: "The review in one plain sentence, under 16 words: is it ready, and the main problem if any.";
         };
         readonly summary: {
             readonly type: "array";
@@ -22,7 +69,7 @@ export declare const AI_SCHEMA: {
                 readonly type: "string";
             };
             readonly maxItems: 3;
-            readonly description: "The key changes, up to 3 short points. Each under 14 words. Say what the change does; problems belong in findings.";
+            readonly description: "Up to 3 review notes, each under 14 words: the problems or risks that matter most.";
         };
         readonly modules: {
             readonly type: "array";
@@ -35,7 +82,15 @@ export declare const AI_SCHEMA: {
                     };
                     readonly summary: {
                         readonly type: "string";
-                        readonly description: "What changed in this module, under 12 words. Say what it does now; problems belong in findings.";
+                        readonly description: "What changed in this module, under 14 words. Facts only, no judgement.";
+                    };
+                    readonly points: {
+                        readonly type: "array";
+                        readonly items: {
+                            readonly type: "string";
+                        };
+                        readonly maxItems: 4;
+                        readonly description: "What changed here, each under 10 words, starting with a verb. Facts only.";
                     };
                     readonly impact: {
                         readonly type: "string";
@@ -43,7 +98,7 @@ export declare const AI_SCHEMA: {
                         readonly description: "How much this module's behaviour changes for users or other modules.";
                     };
                 };
-                readonly required: readonly ["name", "summary", "impact"];
+                readonly required: readonly ["name", "summary", "points", "impact"];
             };
         };
         readonly files: {
@@ -56,7 +111,7 @@ export declare const AI_SCHEMA: {
                     };
                     readonly purpose: {
                         readonly type: "string";
-                        readonly description: "What changed in this file, under 12 words.";
+                        readonly description: "What changed in this file, under 12 words. Facts only.";
                     };
                     readonly risk: {
                         readonly type: "integer";
@@ -65,6 +120,26 @@ export declare const AI_SCHEMA: {
                     };
                 };
                 readonly required: readonly ["path", "purpose", "risk"];
+            };
+        };
+        readonly symbols: {
+            readonly type: "array";
+            readonly description: "One entry per item under \"Changed functions and components\".";
+            readonly items: {
+                readonly type: "object";
+                readonly properties: {
+                    readonly file: {
+                        readonly type: "string";
+                    };
+                    readonly name: {
+                        readonly type: "string";
+                    };
+                    readonly change: {
+                        readonly type: "string";
+                        readonly description: "What changed in it, under 12 words. Facts only, e.g. \"Now saves each item to /api/cart\".";
+                    };
+                };
+                readonly required: readonly ["file", "name", "change"];
             };
         };
         readonly findings: {
@@ -145,9 +220,9 @@ export declare const AI_SCHEMA: {
             readonly required: readonly ["adequate"];
         };
     };
-    readonly required: readonly ["verdict", "risk", "headline", "summary", "modules", "files", "findings", "requirements", "tests"];
+    readonly required: readonly ["change", "verdict", "risk", "headline", "summary", "modules", "files", "symbols", "findings", "requirements", "tests"];
 };
-export declare const SYSTEM_PROMPT = "You review code changes like a careful senior engineer.\n\nReport only real problems in the changed lines: bugs, security holes, data loss, performance traps, missing tests for risky logic, accessibility failures, and requirements the change does not meet. Skip style preferences and anything a formatter or linter would fix. Do not praise. If the change is fine, say so and return few or no findings.\n\nRules for findings:\n- Always give the file and the new-file line number, read from the number at the start of each diff line.\n- severity: blocker = must not merge (breaks things, security hole, data loss); major = likely bug or clear risk; minor = worth fixing; nit = optional.\n- Do not repeat issues listed under \"Already found by static checks\".\n- Write in plain English. Short titles. No markdown in titles.\n\nIf requirements, bugs or tickets are given, check every acceptance criterion against the diff. \"met\" needs code in the diff that does it; \"partial\" when some of it is there; \"missing\" when nothing in the diff does it; \"unclear\" when it can't be told from the diff. Missing criteria count against the verdict.\n\nReply with JSON only, matching the schema.";
+export declare const SYSTEM_PROMPT = "You describe and then review code changes, like a careful senior engineer.\n\nYour reply has two separate parts.\n1. The description: \"change\", \"modules\", \"files\" and \"symbols\". Say what the code now does, as plain facts. No judgement, no problems, no praise, no words like \"critical\", \"broken\", \"improves\" or \"properly\".\n2. The review: \"verdict\", \"risk\", \"headline\", \"summary\", \"findings\", \"requirements\" and \"tests\".\n\nReport only real problems in the changed lines: bugs, security holes, data loss, performance traps, missing tests for risky logic, accessibility failures, and requirements the change does not meet. Skip style preferences and anything a formatter or linter would fix. Do not praise. If the change is fine, say so and return few or no findings.\n\nRules for findings:\n- Always give the file and the new-file line number, read from the number at the start of each diff line.\n- severity: blocker = must not merge (breaks things, security hole, data loss); major = likely bug or clear risk; minor = worth fixing; nit = optional.\n- Do not repeat issues listed under \"Already found by static checks\".\n- Write in plain English. Short titles. No markdown in titles.\n\nIf requirements, bugs or tickets are given, check every acceptance criterion against the diff. \"met\" needs code in the diff that does it; \"partial\" when some of it is there; \"missing\" when nothing in the diff does it; \"unclear\" when it can't be told from the diff. Missing criteria count against the verdict.\n\nReply with JSON only, matching the schema.";
 /** Criteria to check for an item. A bug with none gets one: that it is fixed. */
 export declare function criteriaOf(c: ContextItem): string[];
 export declare function buildPrompt(args: {
@@ -157,6 +232,11 @@ export declare function buildPrompt(args: {
     modules: {
         name: string;
         files: string[];
+    }[];
+    symbols?: {
+        file: string;
+        name: string;
+        action: string;
     }[];
     guidance: string[];
     ruleFindings: Finding[];
