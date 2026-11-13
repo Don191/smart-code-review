@@ -49,12 +49,15 @@ The report is written to `reviews/<branch>.html`. Run with `--help` for every op
 
 | Provider | Env var | Default model |
 | --- | --- | --- |
-| Gemini API (default) | `GEMINI_API_KEY` or `GOOGLE_VERTEX_API_KEY` | `gemini-3.1-flash-lite` (free tier works) |
+| Claude (default) | `ANTHROPIC_API_KEY` | `claude-opus-5-5` at high effort |
+| Gemini API | `GEMINI_API_KEY` or `GOOGLE_VERTEX_API_KEY` | `gemini-3.1-flash-lite` (free tier works) |
 | OpenAI | `OPENAI_API_KEY` | `gpt-5-mini` |
 | Any OpenAI-compatible server | `OPENAI_API_KEY` + `OPENAI_BASE_URL` | set with `--model` |
 | None | | static checks only |
 
-Pick one with `--provider` and `--model`. Without a key the static checks still run.
+Pick one with `--provider` and `--model`, and set Claude's effort with `--effort` (low, medium, high, xhigh or max). Without `--provider`, the first key found is used, in the order above. Without a key the static checks still run.
+
+Claude runs with adaptive thinking and structured output. If Claude's safety checks decline a review, the API reruns it on Anthropic's recommended fallback model.
 
 ## Requirements and bugs
 
@@ -135,17 +138,17 @@ Pass it with `review(input, { connectors: [...BUILT_IN_CONNECTORS, linear] })`.
 ## Use it in code
 
 ```ts
-import { review, renderHtml, fromGitHubPr, gemini } from 'smart-code-review'
+import { review, renderHtml, fromGitHubPr, claude } from 'smart-code-review'
 
 const input = await fromGitHubPr('https://github.com/owner/repo/pull/123')
 const result = await review(input, {
-  provider: gemini({ apiKey: process.env.GEMINI_API_KEY! }),
+  provider: claude({ apiKey: process.env.ANTHROPIC_API_KEY, effort: 'high' }),
   env: process.env // tokens for the connectors
 })
 const html = renderHtml(result)
 ```
 
-The core uses `fetch` only, so it runs in Node, serverless functions and edge runtimes. `smart-code-review/node` adds `fromGit` for local repos. The review is also embedded in the report as JSON (`<script id="review-data">`), so other tools can read it back.
+Claude calls go through the official Anthropic SDK, which is loaded only when Claude is used. The other providers use `fetch`, so the core runs in Node, serverless functions and edge runtimes. `smart-code-review/node` adds `fromGit` for local repos. The review is also embedded in the report as JSON (`<script id="review-data">`), so other tools can read it back.
 
 ## Part of AGIlity
 
@@ -179,7 +182,7 @@ jobs:
           fetch-depth: 0
       - uses: Don191/smart-code-review@main
         env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           AZURE_DEVOPS_ORG: my-org
           AZURE_DEVOPS_PAT: ${{ secrets.AZURE_DEVOPS_PAT }}
         with:

@@ -49,7 +49,7 @@ If you have no tools for them, the CLI fetches them itself when these are set: `
 npx github:Don191/smart-code-review --context review-context.json --out reviews/review.html --json reviews/review.json
 ```
 
-Needs `GEMINI_API_KEY` (free tier is fine) or `OPENAI_API_KEY`. Add `--provider none` for static checks only. A `.smart-code-review.md` file in the repo root is added to the prompt as house rules.
+Uses Claude Opus 5.5 at high effort with `ANTHROPIC_API_KEY`, or `GEMINI_API_KEY` / `OPENAI_API_KEY`. Add `--provider none` for static checks only. A `.smart-code-review.md` file in the repo root is added to the prompt as house rules.
 
 ## 4. Report back
 

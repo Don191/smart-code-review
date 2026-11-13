@@ -34,8 +34,9 @@ Options
   --instructions <file>  House review rules (default: .smart-code-review.md if present)
                          Module names can be set in .smart-code-review.json
   --plugin <module>      Load a plugin module (repeatable)
-  --provider <name>      gemini (default), openai, vertex or none
-  --model <id>           Model id, e.g. gemini-3.1-flash-lite
+  --provider <name>      claude (default), gemini, openai, vertex or none
+  --model <id>           Model id (default for claude: claude-opus-5-5)
+  --effort <level>       Claude effort: low, medium, high (default), xhigh, max
   --title <text>         Title for the report
   --body-file <file>     PR description, searched for linked work items
   --url <url>            Link for the title
@@ -66,6 +67,7 @@ async function main() {
             instructions: { type: 'string' },
             plugin: { type: 'string', multiple: true },
             provider: { type: 'string' },
+            effort: { type: 'string' },
             model: { type: 'string' },
             title: { type: 'string' },
             'body-file': { type: 'string' },
@@ -112,9 +114,9 @@ async function main() {
         const exported = mod.default ?? mod.plugin ?? mod.plugins;
         plugins.push(...(Array.isArray(exported) ? exported : [exported]));
     }
-    const provider = a.provider === 'none' ? undefined : providerFromEnv(env, a.provider, a.model);
+    const provider = a.provider === 'none' ? undefined : providerFromEnv(a.effort ? { ...env, SMART_REVIEW_EFFORT: a.effort } : env, a.provider, a.model);
     if (!provider && a.provider !== 'none')
-        log('No AI key found (GEMINI_API_KEY or OPENAI_API_KEY), so only static checks will run.');
+        log('No AI key found (ANTHROPIC_API_KEY, GEMINI_API_KEY or OPENAI_API_KEY), so only static checks will run.');
     // Optional module names, e.g. {"modules": [{"name": "Portal", "paths": ["apps/portal/"]}]}
     const config = existsSync('.smart-code-review.json') ? JSON.parse(readFileSync('.smart-code-review.json', 'utf8')) : {};
     const result = await review(input, {
