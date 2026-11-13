@@ -1,5 +1,8 @@
 import type { ModuleKind } from './types.ts'
 
+/** Files that set up AI coding agents: instructions, skills, subagents, commands, hooks and MCP servers. */
+export const AGENT_FILE = /(^|\/)(CLAUDE|AGENTS|GEMINI)(\.local)?\.md$|(^|\/)\.claude\/|(^|\/)\.mcp\.json$|(^|\/)\.cursor\/|(^|\/)\.cursorrules$|(^|\/)\.windsurfrules$|(^|\/)\.github\/(copilot-instructions\.md|instructions\/|prompts\/|agents\/|chatmodes\/)|(^|\/)\.(codex|gemini|agents)\/|(^|\/)skills\/[^/]+\/SKILL\.md$|(^|\/)\.smart-code-review\.(md|json)$/
+
 /** A named part of the codebase, matched by path prefix. Set these when the defaults guess wrong. */
 export interface ModuleRule {
   name: string
@@ -14,6 +17,7 @@ export function kindFromName(name: string): ModuleKind {
   const n = name.toLowerCase()
   if (/portal|web|front|site|dashboard|ui\b|admin|client|app$|mobile|docs-site|storybook/.test(n)) return 'frontend'
   if (/api|server|back|worker|service|jobs|queue|db|database|auth|gateway|lambda|functions?/.test(n)) return 'backend'
+  if (/agent|claude|skill|copilot|\bai\b/.test(n)) return 'agents'
   if (/test|e2e/.test(n)) return 'tests'
   if (/doc/.test(n)) return 'docs'
   if (/config|tooling|scripts|ci/.test(n)) return 'config'
@@ -31,6 +35,7 @@ export function moduleOf(path: string, role: string, isMonorepo: boolean, rules:
     const hit = r.paths.find(p => path.startsWith(p))
     if (hit) return { name: r.name, kind: r.kind ?? kindFromName(r.name), root: hit }
   }
+  if (AGENT_FILE.test(path)) return { name: 'AI agent setup', kind: 'agents' }
   const parts = path.split('/')
   if (isMonorepo && parts.length > 2 && WORKSPACE_DIRS.has(parts[0]!)) {
     const ws = parts[1]!

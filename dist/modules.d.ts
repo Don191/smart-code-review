@@ -1,4 +1,6 @@
 import type { ModuleKind } from './types.ts';
+/** Files that set up AI coding agents: instructions, skills, subagents, commands, hooks and MCP servers. */
+export declare const AGENT_FILE: RegExp;
 /** A named part of the codebase, matched by path prefix. Set these when the defaults guess wrong. */
 export interface ModuleRule {
     name: string;

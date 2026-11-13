@@ -111,14 +111,14 @@ export interface SymbolChange {
 
 /** Something the change does that matters outside its file. */
 export interface ChangeFact {
-  kind: 'route' | 'page' | 'component' | 'dependency' | 'env' | 'config' | 'migration'
+  kind: 'route' | 'page' | 'component' | 'dependency' | 'env' | 'config' | 'migration' | 'agent'
   action: 'added' | 'changed' | 'removed'
   label: string
   detail?: string
   file: string
 }
 
-export type ModuleKind = 'frontend' | 'backend' | 'shared' | 'tests' | 'docs' | 'config'
+export type ModuleKind = 'frontend' | 'backend' | 'shared' | 'tests' | 'docs' | 'config' | 'agents'
 
 /** A high level part of the change: a workspace in a monorepo, or a layer such as frontend or backend. */
 export interface ModuleSummary {

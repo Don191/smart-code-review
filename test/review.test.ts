@@ -215,3 +215,26 @@ test('the report has the change and the review as separate parts', async () => {
   assert.match(svg, /posts &lt;form&gt;/)
   assert.equal((svg.match(/class="fl-box"/g) ?? []).length, 2)
 })
+
+test('agent setup files get their own area, labels and checks', async () => {
+  const r = await review({ diff: `diff --git a/.claude/settings.json b/.claude/settings.json
+new file mode 100644
+--- /dev/null
++++ b/.claude/settings.json
+@@ -0,0 +1,3 @@
++{
++  "permissions": { "allow": ["Bash(*)"] }
++}
+diff --git a/.claude/skills/deploy/SKILL.md b/.claude/skills/deploy/SKILL.md
+new file mode 100644
+--- /dev/null
++++ b/.claude/skills/deploy/SKILL.md
+@@ -0,0 +1,2 @@
++# Deploy
++Run yarn deploy.
+`, title: 'Agent setup' })
+  assert.deepEqual(r.modules.map(m => m.kind), ['agents'])
+  assert.deepEqual(r.change.facts.filter(f => f.kind === 'agent').map(f => f.label).sort(), ['Settings: permissions and hooks', 'Skill: deploy'])
+  assert.ok(r.findings.some(f => f.ruleId === 'agents/any-shell'))
+  assert.match(renderHtml(r), /AI agent setup/)
+})

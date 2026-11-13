@@ -2,7 +2,7 @@ import { addedLines, parseDiff } from "./diff.js";
 import { gatherContext } from "./connectors/index.js";
 import { AI_SCHEMA, SYSTEM_PROMPT, buildPrompt, criteriaOf, parseJson } from "./llm/prompt.js";
 import { lockfile } from "./plugins/others.js";
-import { changeFacts, symbolChanges } from "./facts.js";
+import { changeFacts, describeSymbol, symbolChanges } from "./facts.js";
 import { looksLikeMonorepo, moduleOf } from "./modules.js";
 import { PluginRegistry } from "./plugins/registry.js";
 import { SEVERITIES } from "./types.js";
@@ -203,6 +203,8 @@ export async function review(input, opts = {}) {
             const d = (ai?.symbols ?? []).find((x) => x?.name === y.name && resolvePath(x.file, paths) === s.path);
             if (typeof d?.change === 'string')
                 y.description = d.change;
+            else
+                y.description ??= describeSymbol(y);
         }
         s.risk = a?.risk !== undefined && Number.isFinite(a.risk) ? clamp(computed * 0.5 + a.risk * 0.5) : computed;
         if (grouped.some(g => g.file === s.path && g.severity === 'blocker'))

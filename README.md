@@ -9,6 +9,7 @@ AI code review that writes a visual HTML report. The report has two parts, and e
 - **Summary first.** What the change does in one sentence, then counts: files, areas, functions added, changed and removed, API routes, dependencies, environment variables, and how long it will take to review.
 - **How it fits together.** A diagram of the main path through the change, from the UI to the API, for example.
 - **Areas changed.** One short section per module: each workspace in a monorepo (portal, api, ui...) or each layer (frontend, backend, shared, tests, config). Each opens to its files, each file to the functions, components and templates it changes, and each of those to its lines.
+- **AI agent setup.** Changes to CLAUDE.md, AGENTS.md, `.claude/` skills, subagents, commands, hooks and settings, MCP servers, Copilot and Cursor rules get their own section. The review flags agent permissions that allow any shell command, permission checks turned off, and secrets in agent config.
 - **Outside the code.** API routes, pages, dependencies, environment variables, config keys and migrations that were added, changed or removed.
 
 **Review** gives the reviewer's assessment.
