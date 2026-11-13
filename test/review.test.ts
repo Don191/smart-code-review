@@ -256,3 +256,16 @@ test('fits AGIlity: stable ids, severity scale, lite mode and the adapter', asyn
   const got = await gatherContext({ diff, title: 'Fixes #12' }, { env: { AGILITY_MODE: 'lite' } })
   assert.deepEqual(got.items, [])
 })
+
+test('Claude is the default provider at high effort', async () => {
+  const { providerFromEnv, strictSchema } = await import('../src/llm/providers.ts')
+  const p = providerFromEnv({ ANTHROPIC_API_KEY: 'x', GEMINI_API_KEY: 'y' })
+  assert.equal(p?.name, 'Claude')
+  assert.equal(p?.model, 'claude-opus-5-5')
+  assert.equal(providerFromEnv({ ANTHROPIC_API_KEY: 'x', GEMINI_API_KEY: 'y' }, 'gemini')?.name, 'Gemini')
+  assert.equal(providerFromEnv({ GEMINI_API_KEY: 'y' })?.name, 'Gemini')
+  const { AI_SCHEMA } = await import('../src/llm/prompt.ts')
+  const s = JSON.stringify(strictSchema(AI_SCHEMA))
+  assert.ok(!/maxItems|minimum|maximum/.test(s))
+  assert.ok(strictSchema(AI_SCHEMA).additionalProperties === false)
+})
