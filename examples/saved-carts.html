@@ -350,7 +350,6 @@ footer{margin-top:32px;color:var(--muted);font-size:12px;text-align:center}
     <div class="part" data-part="part-change">
     <section class="hero">
       <p class="c-sum">Adds cart management features including item removal, saving for later, and discount code application.</p>
-      <ul class="keys"><li>Adds remove, save, and applyCode functions to useCart</li><li>Adds UI for cart management in CartSummary</li><li>Adds server endpoints for saving items and validating discounts</li></ul>
       <div class="facts"><span class="chip-f"><b>5</b> files <span class="plus">+60</span> <span class="minus">−4</span></span><span class="chip-f"><b>3</b> areas</span><span class="chip-f"><span class="act act-added">4 added</span><span class="act act-changed">1 changed</span> functions and types</span><span class="chip-f"><b>1</b> test</span><span class="chip-f"><b>2</b> API routes</span><span class="chip-f"><span class="pips" title="Review effort 3 of 5"><i class="on"></i><i class="on"></i><i class="on"></i><i class=""></i><i class=""></i></span><span>Medium to review</span></span></div>
     </section>
     <div class="panel flow-panel"><h3>How it fits together</h3><div class="flow-wrap"><svg class="flow" viewBox="0 0 1000 208" role="img" aria-label="How the parts of the change call each other">
@@ -370,7 +369,6 @@ footer{margin-top:32px;color:var(--muted);font-size:12px;text-align:center}
         <span class="m-size">2 files<br><span class="plus">+18</span> <span class="minus">−0</span></span>
       </summary>
       <div class="m-body">
-        <ul class="keys"><li>Adds POST /api/cart for saving items</li><li>Adds GET /api/cart/discount for code validation</li></ul>
         <div class="list"><details class="cfile" id="cfile-server-api-cart-discount-get-ts" data-path="server/api/cart/discount.get.ts">
     <summary>
       <span class="st-badge st-added">Added</span>
@@ -407,7 +405,6 @@ footer{margin-top:32px;color:var(--muted);font-size:12px;text-align:center}
         <span class="m-size">2 files<br><span class="plus">+41</span> <span class="minus">−3</span></span>
       </summary>
       <div class="m-body">
-        <ul class="keys"><li>Adds cart management methods to useCart</li><li>Updates CartSummary template with new controls</li></ul>
         <div class="list"><details class="cfile" id="cfile-app-components-CartSummary-vue" data-path="app/components/CartSummary.vue">
     <summary>
       <span class="st-badge st-changed">Changed</span>
@@ -462,7 +459,6 @@ footer{margin-top:32px;color:var(--muted);font-size:12px;text-align:center}
         <span class="m-size">1 file<br><span class="plus">+1</span> <span class="minus">−1</span></span>
       </summary>
       <div class="m-body">
-        <ul class="keys"><li>Changes test to focused mode</li></ul>
         <div class="list"><details class="cfile" id="cfile-test-cart-test-ts" data-path="test/cart.test.ts">
     <summary>
       <span class="st-badge st-changed">Changed</span>
@@ -508,7 +504,6 @@ footer{margin-top:32px;color:var(--muted);font-size:12px;text-align:center}
     <div class="v-text">
       <span class="pill">Changes needed</span>
       <p class="headline">The change contains critical security vulnerabilities and broken test configuration.</p>
-      <ul class="keys"><li>SQL injection vulnerability in discount endpoint.</li><li>Unvalidated request body in cart save endpoint.</li><li>Focused test prevents CI from running full suite.</li></ul>
     </div>
   </section>
 
