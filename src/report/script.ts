@@ -31,7 +31,8 @@ export const SCRIPT = `
     if(el.hasAttribute('data-filter-sev')){e.preventDefault();filter(el.dataset.filterSev||'',el.dataset.filterCat||'');if(el.classList.contains('dot'))reveal($('.filters'));return}
     e.preventDefault();
     if(el.hasAttribute('data-open-cfile')){
-      reveal($$('.cfile').filter(function(x){return x.dataset.path===el.dataset.openCfile})[0]);return;
+      var cs=$$('.cfile').filter(function(x){return x.dataset.path===el.dataset.openCfile});
+      reveal(cs.filter(function(x){return x.offsetParent!==null})[0]||cs[0]);return;
     }
     if(el.hasAttribute('data-open-file')){
       openTab('tab-files');

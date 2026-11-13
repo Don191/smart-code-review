@@ -28,6 +28,7 @@ const DATA = ['.json', '.yml', '.yaml', '.toml']
 export const plain: ReviewPlugin[] = [
   { name: 'css', kind: 'language', label: 'CSS', color: '#663399', extensions: STYLE },
   { name: 'html', kind: 'language', label: 'HTML', color: '#e34c26', extensions: ['.html', '.htm'] },
+  { name: 'sql', kind: 'language', label: 'SQL', color: '#e38c00', extensions: ['.sql'], classify: (p) => (/(^|\/)migrations?\//.test(p) ? 'Migration' : 'SQL') },
   { name: 'docs', kind: 'language', label: 'Docs', color: '#8b949e', extensions: DOCS, classify: () => 'Docs' },
   {
     name: 'data',

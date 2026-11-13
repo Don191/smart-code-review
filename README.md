@@ -7,6 +7,7 @@ AI code review that writes a visual HTML report, built so a pull request can be 
 **The change** describes what the change does, without judgement.
 
 - **Summary first.** What the change does in one sentence, then counts: files, areas, functions added, changed and removed, API routes, dependencies, environment variables, and how long it will take to review.
+- **By feature.** A large PR is split into the features and chores it contains (gift cards, order history, dependency upgrades, agent setup), each with its areas, its findings and its files down to the functions that belong to it. Switch to **By area** to see the same change by workspace or layer.
 - **How it fits together.** A diagram of the main path through the change, from the UI to the API, for example.
 - **Areas changed.** One short section per module: each workspace in a monorepo (portal, api, ui...) or each layer (frontend, backend, shared, tests, config). Each opens to its files, each file to the functions, components and templates it changes, and each of those to its lines.
 - **AI agent setup.** Changes to CLAUDE.md, AGENTS.md, `.claude/` skills, subagents, commands, hooks and settings, MCP servers, Copilot and Cursor rules get their own section. The review flags agent permissions that allow any shell command, permission checks turned off, and secrets in agent config.
@@ -25,7 +26,7 @@ It also:
 - **Is built for JS, TS, Vue, Node and Nuxt**, with plugins for other languages.
 - **Is one file.** The report has no external assets, so it can be attached to a CI run, emailed or opened offline.
 
-Sample reports: [saved carts (planted problems, with requirements)](examples/saved-carts.html) and [a real change from webcontainers-demo](examples/webcontainers-tui.html). Download and open them in a browser.
+Sample reports: [a large PR with several features](examples/acme-release.html), [saved carts (planted problems, with requirements)](examples/saved-carts.html) and [a real change from webcontainers-demo](examples/webcontainers-tui.html). Download and open them in a browser.
 
 ## Run it
 

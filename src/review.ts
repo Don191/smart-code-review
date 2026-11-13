@@ -192,7 +192,7 @@ export async function review(input: ChangeInput, opts: ReviewOptions = {}): Prom
       const cat: Category = raw.category ?? 'bug'
       const line = Number.isFinite(raw.line) && raw.line > 0 ? Math.round(raw.line) : undefined
       // Skip ones the static checks already reported on the same line.
-      if (grouped.some(g => g.source === 'rule' && g.file === file && (line === undefined ? g.category === cat || g.severity === sev && sameTopic(g.title, String(raw.title)) : Math.abs((g.line ?? -99) - line) <= 1 && (g.category === cat || sameTopic(g.title, String(raw.title)))))) continue
+      if (grouped.some(g => g.source === 'rule' && g.file === file && (line === undefined ? g.category === cat || g.severity === sev && sameTopic(g.title, String(raw.title)) : Math.abs((g.line ?? -99) - line) <= 1 && (g.category === cat || sameTopic(g.title, String(raw.title)) || (g.line === line && sameTopic(g.title, String(raw.title), 3)))))) continue
       const before = lineText(diff.find(d => d.path === file), line)
       grouped.push({
         id: `F${++n}`,
@@ -222,7 +222,7 @@ export async function review(input: ChangeInput, opts: ReviewOptions = {}): Prom
     const found = grouped.filter(g => g.file === s.path).reduce((sum, g) => sum + SEVERITY_WEIGHT[g.severity], 0)
     const computed = clamp(size + roleW + found)
     const a = aiFiles.get(s.path)
-    s.purpose = a?.purpose
+    s.purpose = a?.purpose ?? describeFile(s)
     for (const y of s.symbols) {
       const d = (ai?.symbols ?? []).find((x: any) => x?.name === y.name && resolvePath(x.file, paths) === s.path)
       if (typeof d?.change === 'string') y.description = d.change
@@ -319,6 +319,7 @@ export async function review(input: ChangeInput, opts: ReviewOptions = {}): Prom
       points: Array.isArray(ai?.change?.points) ? ai.change.points.slice(0, 4).map(String) : [],
       facts: files.flatMap(f => f.facts),
       effort: Number.isInteger(ai?.change?.effort) && ai.change.effort >= 1 && ai.change.effort <= 5 ? ai.change.effort : effortFromSize(files),
+      features: featuresFrom(ai?.change?.features, files),
       flow: Array.isArray(ai?.change?.flow) ? ai.change.flow.filter((s: any) => s?.from && s?.to).slice(0, 8).map((s: any) => ({ from: String(s.from).slice(0, 40), to: String(s.to).slice(0, 40), label: String(s.label ?? '').slice(0, 60) })) : undefined
     },
     verdict,
@@ -334,6 +335,54 @@ export async function review(input: ChangeInput, opts: ReviewOptions = {}): Prom
     diff,
     warnings
   }
+}
+
+/** The model's feature groups, with paths resolved. Files it left out go in "Other changes". */
+function featuresFrom(raw: unknown, files: FileSummary[]): Review['change']['features'] {
+  if (!Array.isArray(raw)) return undefined
+  const paths = files.map(f => f.path)
+  const out = raw.filter((x: any) => x?.name).slice(0, 12).map((x: any) => ({
+    name: String(x.name).slice(0, 50),
+    summary: typeof x.summary === 'string' ? x.summary : undefined,
+    files: [...new Set((Array.isArray(x.files) ? x.files : []).map((p: unknown) => resolvePath(String(p), paths)).filter(Boolean) as string[])],
+    symbols: Array.isArray(x.symbols) ? x.symbols.map(String) : []
+  })).filter(f => f.files.length)
+  if (out.length < 2) return undefined
+  const covered = new Set(out.flatMap(f => f.files))
+  const byPath = new Map(files.map(f => [f.path, f]))
+  const words = (s: string) => s.toLowerCase().split(/[^a-z0-9]+/).filter(w => w.length > 3).map(w => w.replace(/s$/, ''))
+  const deps: string[] = []
+  const agent: string[] = []
+  const other: string[] = []
+  for (const p of paths.filter(p => !covered.has(p))) {
+    const f = byPath.get(p)!
+    if (f.module === 'AI agent setup') { agent.push(p); continue }
+    if (f.role === 'Lockfile' || (/(^|\/)package\.json$/.test(p) && f.facts.every(x => x.kind === 'dependency'))) { deps.push(p); continue }
+    // A test, or a file whose name matches a feature's name, joins that feature.
+    const w = words(p.split('/').pop()!)
+    const home = out.find(x => words(x.name).some(n => w.includes(n)))
+    if (home) { home.files.push(p); continue }
+    other.push(p)
+  }
+  const depNames = [...new Set(deps.flatMap(p => byPath.get(p)!.facts.filter(x => x.kind === 'dependency').map(x => x.label)))]
+  if (deps.length) out.push({ name: 'Dependency upgrades', summary: depNames.length ? `Changes ${depNames.slice(0, 5).join(', ')}${depNames.length > 5 ? ` and ${depNames.length - 5} more` : ''}.` : undefined, files: deps, symbols: [] })
+  if (agent.length) out.push({ name: 'AI agent setup', summary: 'Changes the instructions, skills or settings for AI coding agents.', files: agent, symbols: [] })
+  if (other.length) out.push({ name: 'Other changes', summary: undefined, files: other, symbols: [] })
+  return out
+}
+
+/** A plain purpose for a file the model skipped: what it is and what it adds or changes. */
+function describeFile(f: FileSummary): string | undefined {
+  const fact = f.facts.find(x => x.kind === 'route' || x.kind === 'page' || x.kind === 'migration')
+  const names = f.symbols.filter(y => y.kind !== 'template').map(y => y.name)
+  const list = names.slice(0, 3).join(', ') + (names.length > 3 ? ` and ${names.length - 3} more` : '')
+  if (fact) return `${f.status === 'added' ? 'New' : 'Changes'} ${fact.kind === 'route' ? 'route' : fact.kind} ${fact.label}`
+  if (f.status === 'added') return names.length ? `New ${f.role.toLowerCase()}: ${list}` : undefined
+  if (names.length) return `Changes ${list}`
+  if (f.symbols.some(y => y.kind === 'template')) return 'Changes the template'
+  const deps = f.facts.filter(x => x.kind === 'dependency').map(x => x.label)
+  if (deps.length) return `Changes ${deps.slice(0, 3).join(', ')}${deps.length > 3 ? ` and ${deps.length - 3} more` : ''}`
+  return undefined
 }
 
 /** Review effort from the size of the change, when the model gives none. */
@@ -352,8 +401,8 @@ function describeChange(files: FileSummary[], modules: ModuleSummary[]): string 
 }
 
 /** Rough check that two titles are about the same thing. */
-function sameTopic(a: string, b: string): boolean {
-  const words = (s: string) => new Set(s.toLowerCase().split(/[^a-z0-9]+/).filter(w => w.length > 3))
+function sameTopic(a: string, b: string, min = 4): boolean {
+  const words = (s: string) => new Set(s.toLowerCase().split(/[^a-z0-9]+/).filter(w => w.length >= min && !['the', 'and', 'not', 'are', 'with'].includes(w)))
   const wa = words(a)
   return [...words(b)].some(w => wa.has(w) || [...wa].some(x => x.startsWith(w.slice(0, 5)) && w.length >= 5))
 }

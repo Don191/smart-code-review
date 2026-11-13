@@ -46,6 +46,7 @@ export const nuxt: ReviewPlugin = {
       category: 'security',
       appliesTo: inServer,
       pattern: /\breadBody\(|getQuery\(/,
+      unless: /\.(safeParse|parse|parseAsync)\(|Validated/,
       detail: 'Anything can be sent to this route. readValidatedBody or getValidatedQuery with a schema (e.g. zod) rejects bad input before it is used.'
     }),
     lineRule({
@@ -75,7 +76,7 @@ export const node: ReviewPlugin = {
   label: 'Node.js',
   extensions: ['.ts', '.js', '.mjs', '.cjs'],
   detect: (paths) => paths.some(p => /(^|\/)(server|api|src\/server|routes|lib)\//.test(p) || /(^|\/)package\.json$/.test(p)),
-  classify: (p) => (/(^|\/)(server|api|routes)\//.test(p) ? 'Server' : undefined),
+  classify: (p) => (/(^|\/)(tests?|__tests__|e2e)\/|\.(test|spec)\.[cm]?[jt]s$/.test(p) ? 'Test' : /(^|\/)(server|routes)\/|(^|\/)src\/api\//.test(p) ? 'Server' : undefined),
   rules: [
     lineRule({
       id: 'node/sync-fs',
