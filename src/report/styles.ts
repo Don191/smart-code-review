@@ -182,6 +182,26 @@ details>summary::-webkit-details-marker{display:none}
 .f-meta{font-size:12px;color:var(--muted);margin-top:8px}
 .f-meta a{color:var(--muted)}
 .finding.hide{display:none}
+.feedback{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;padding:8px 12px;margin-bottom:10px;border:1px solid var(--line);border-radius:10px;background:var(--panel)}
+.feedback .sp{flex:1}
+.fb-counts{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:13px;color:var(--muted)}
+.fb-c{display:inline-flex;align-items:center;gap:5px}
+.fb-c b{color:var(--fg)}
+.fb-c i{width:8px;height:8px;border-radius:99px;background:var(--stc)}
+.fb-name{font:inherit;font-size:13px;padding:4px 10px;border:1px solid var(--line);border-radius:99px;background:var(--panel);color:var(--fg)}
+.feedback label.chip{cursor:pointer}
+.st-open{--stc:var(--muted)}.st-agreed{--stc:#7c3aed}.st-fixed{--stc:#16a34a}.st-wont-fix{--stc:#64748b}.st-discuss{--stc:#d97706}
+.anno-pill:empty{display:none}
+.anno-pill{flex:none;font-size:11px;font-weight:600;padding:2px 8px;border-radius:99px;color:var(--stc);background:color-mix(in srgb,var(--stc) 13%,transparent)}
+.anno-has{flex:none;color:var(--muted);font-size:13px}
+.finding[data-status=fixed]>summary .f-title,.finding[data-status=wont-fix]>summary .f-title{color:var(--muted)}
+.anno{margin:12px 0 8px;padding:10px;border-radius:10px;background:var(--panel2)}
+.anno-st{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px}
+.anno-st button{font:inherit;font-size:12px;padding:4px 10px;border-radius:99px;border:1px solid var(--line);background:var(--panel);color:var(--muted);cursor:pointer}
+.anno-st button.on{color:#fff;background:var(--stc);border-color:var(--stc)}
+.anno-note{display:block;width:100%;box-sizing:border-box;font:inherit;font-size:13px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--fg);resize:vertical}
+.anno-by{font-size:12px;margin-top:4px}
+.anno-by:empty{display:none}
 .code{font-family:var(--mono);font-size:12.5px;line-height:1.55;border:1px solid var(--line);border-radius:8px;overflow:auto;background:var(--panel)}
 .ln{display:flex;white-space:pre;min-width:max-content}
 .ln .no{flex:none;width:44px;text-align:right;padding-right:8px;color:var(--muted);user-select:none;opacity:.7}

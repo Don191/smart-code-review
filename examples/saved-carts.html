@@ -189,6 +189,26 @@ details>summary::-webkit-details-marker{display:none}
 .f-meta{font-size:12px;color:var(--muted);margin-top:8px}
 .f-meta a{color:var(--muted)}
 .finding.hide{display:none}
+.feedback{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;padding:8px 12px;margin-bottom:10px;border:1px solid var(--line);border-radius:10px;background:var(--panel)}
+.feedback .sp{flex:1}
+.fb-counts{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:13px;color:var(--muted)}
+.fb-c{display:inline-flex;align-items:center;gap:5px}
+.fb-c b{color:var(--fg)}
+.fb-c i{width:8px;height:8px;border-radius:99px;background:var(--stc)}
+.fb-name{font:inherit;font-size:13px;padding:4px 10px;border:1px solid var(--line);border-radius:99px;background:var(--panel);color:var(--fg)}
+.feedback label.chip{cursor:pointer}
+.st-open{--stc:var(--muted)}.st-agreed{--stc:#7c3aed}.st-fixed{--stc:#16a34a}.st-wont-fix{--stc:#64748b}.st-discuss{--stc:#d97706}
+.anno-pill:empty{display:none}
+.anno-pill{flex:none;font-size:11px;font-weight:600;padding:2px 8px;border-radius:99px;color:var(--stc);background:color-mix(in srgb,var(--stc) 13%,transparent)}
+.anno-has{flex:none;color:var(--muted);font-size:13px}
+.finding[data-status=fixed]>summary .f-title,.finding[data-status=wont-fix]>summary .f-title{color:var(--muted)}
+.anno{margin:12px 0 8px;padding:10px;border-radius:10px;background:var(--panel2)}
+.anno-st{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px}
+.anno-st button{font:inherit;font-size:12px;padding:4px 10px;border-radius:99px;border:1px solid var(--line);background:var(--panel);color:var(--muted);cursor:pointer}
+.anno-st button.on{color:#fff;background:var(--stc);border-color:var(--stc)}
+.anno-note{display:block;width:100%;box-sizing:border-box;font:inherit;font-size:13px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--fg);resize:vertical}
+.anno-by{font-size:12px;margin-top:4px}
+.anno-by:empty{display:none}
 .code{font-family:var(--mono);font-size:12.5px;line-height:1.55;border:1px solid var(--line);border-radius:8px;overflow:auto;background:var(--panel)}
 .ln{display:flex;white-space:pre;min-width:max-content}
 .ln .no{flex:none;width:44px;text-align:right;padding-right:8px;color:var(--muted);user-select:none;opacity:.7}
@@ -742,43 +762,48 @@ footer{margin-top:48px}
       </summary>
       <div class="m-body">
         <div class="m-files"><a class="m-file" href="#file-server-api-cart-discount-get-ts" data-open-file="server/api/cart/discount.get.ts"><span class="risk-pill" style="--rc:rgb(235 85 57)">91</span><span class="path"><span class="dir">server/api/cart/</span>discount.get.ts</span><span class="m-purpose">Handles discount code validation</span></a><a class="m-file" href="#file-server-api-cart-index-post-ts" data-open-file="server/api/cart/index.post.ts"><span class="risk-pill" style="--rc:rgb(255 176 36)">46</span><span class="path"><span class="dir">server/api/cart/</span>index.post.ts</span><span class="m-purpose">Handles cart item persistence</span></a></div>
-        <div class="list nested"><details class="finding" id="F13" data-sev="blocker" data-cat="security">
-  <summary><svg class="sev sev-blocker" width="14" height="14" viewBox="0 0 16 16" aria-label="Blocker" role="img"><polygon points="5,1 11,1 15,5 15,11 11,15 5,15 1,11 1,5"/></svg><span class="f-title">SQL built from a string</span><span class="tag cat-security">Security</span><span class="loc">discount.get.ts:6</span></summary>
+        <div class="list nested"><details class="finding" id="F13" data-sev="blocker" data-cat="security" data-status="open">
+  <summary><svg class="sev sev-blocker" width="14" height="14" viewBox="0 0 16 16" aria-label="Blocker" role="img"><polygon points="5,1 11,1 15,5 15,11 11,15 5,15 1,11 1,5"/></svg><span class="f-title">SQL built from a string</span><span class="anno-pill st-open"></span><span class="tag cat-security">Security</span><span class="loc">discount.get.ts:6</span></summary>
   <div class="f-body">
     <p>Joining values into SQL allows SQL injection. Use parameters (?, $1) or a tagged sql`` helper.</p>
     <div class="code"><div class="ln ln-add"><span class="no">3</span><span class="mk">+</span><span class="tx">export default defineEventHandler(async (event) =&gt; {</span></div><div class="ln ln-add"><span class="no">4</span><span class="mk">+</span><span class="tx">  const { code } = getQuery(event)</span></div><div class="ln ln-add"><span class="no">5</span><span class="mk">+</span><span class="tx">  const codes = JSON.parse(readFileSync(&#39;./data/discounts.json&#39;, &#39;utf8&#39;))</span></div><div class="ln ln-add ln-hit"><span class="no">6</span><span class="mk">+</span><span class="tx">  const rows = await db.$queryRawUnsafe(`SELECT percent FROM discounts WHERE code = &#39;${code}&#39;`)</span></div><div class="ln ln-add"><span class="no">7</span><span class="mk">+</span><span class="tx">  return { percent: rows[0]?.percent ?? codes[code as string] ?? 0 }</span></div><div class="ln ln-add"><span class="no">8</span><span class="mk">+</span><span class="tx">})</span></div></div>
     
+    
     <div class="f-meta">Blocker · <a href="#file-server-api-cart-discount-get-ts" data-open-file="server/api/cart/discount.get.ts">server/api/cart/discount.get.ts:6</a> · Static check <code>node/sql-concat</code></div>
   </div>
-</details><details class="finding" id="F11" data-sev="minor" data-cat="security">
-  <summary><svg class="sev sev-minor" width="14" height="14" viewBox="0 0 16 16" aria-label="Minor" role="img"><circle cx="8" cy="8" r="6"/></svg><span class="f-title">Request body used without validation</span><span class="tag cat-security">Security</span><span class="loc">discount.get.ts:4</span></summary>
+</details><details class="finding" id="F11" data-sev="minor" data-cat="security" data-status="open">
+  <summary><svg class="sev sev-minor" width="14" height="14" viewBox="0 0 16 16" aria-label="Minor" role="img"><circle cx="8" cy="8" r="6"/></svg><span class="f-title">Request body used without validation</span><span class="anno-pill st-open"></span><span class="tag cat-security">Security</span><span class="loc">discount.get.ts:4</span></summary>
   <div class="f-body">
     <p>Anything can be sent to this route. readValidatedBody or getValidatedQuery with a schema (e.g. zod) rejects bad input before it is used.</p>
     <div class="code"><div class="ln ln-add"><span class="no">1</span><span class="mk">+</span><span class="tx">import { readFileSync } from &#39;node:fs&#39;</span></div><div class="ln ln-add"><span class="no">2</span><span class="mk">+</span><span class="tx"> </span></div><div class="ln ln-add"><span class="no">3</span><span class="mk">+</span><span class="tx">export default defineEventHandler(async (event) =&gt; {</span></div><div class="ln ln-add ln-hit"><span class="no">4</span><span class="mk">+</span><span class="tx">  const { code } = getQuery(event)</span></div><div class="ln ln-add"><span class="no">5</span><span class="mk">+</span><span class="tx">  const codes = JSON.parse(readFileSync(&#39;./data/discounts.json&#39;, &#39;utf8&#39;))</span></div><div class="ln ln-add"><span class="no">6</span><span class="mk">+</span><span class="tx">  const rows = await db.$queryRawUnsafe(`SELECT percent FROM discounts WHERE code = &#39;${code}&#39;`)</span></div><div class="ln ln-add"><span class="no">7</span><span class="mk">+</span><span class="tx">  return { percent: rows[0]?.percent ?? codes[code as string] ?? 0 }</span></div></div>
     
+    
     <div class="f-meta">Minor · <a href="#file-server-api-cart-discount-get-ts" data-open-file="server/api/cart/discount.get.ts">server/api/cart/discount.get.ts:4</a> · Static check <code>nuxt/unvalidated-body</code></div>
   </div>
-</details><details class="finding" id="F12" data-sev="minor" data-cat="performance">
-  <summary><svg class="sev sev-minor" width="14" height="14" viewBox="0 0 16 16" aria-label="Minor" role="img"><circle cx="8" cy="8" r="6"/></svg><span class="f-title">Blocking file read on the server</span><span class="tag cat-performance">Performance</span><span class="loc">discount.get.ts:5</span></summary>
+</details><details class="finding" id="F12" data-sev="minor" data-cat="performance" data-status="open">
+  <summary><svg class="sev sev-minor" width="14" height="14" viewBox="0 0 16 16" aria-label="Minor" role="img"><circle cx="8" cy="8" r="6"/></svg><span class="f-title">Blocking file read on the server</span><span class="anno-pill st-open"></span><span class="tag cat-performance">Performance</span><span class="loc">discount.get.ts:5</span></summary>
   <div class="f-body">
     <p>Sync file calls block every other request while they run. Use the fs/promises versions in request handlers.</p>
     <div class="code"><div class="ln ln-add"><span class="no">2</span><span class="mk">+</span><span class="tx"> </span></div><div class="ln ln-add"><span class="no">3</span><span class="mk">+</span><span class="tx">export default defineEventHandler(async (event) =&gt; {</span></div><div class="ln ln-add"><span class="no">4</span><span class="mk">+</span><span class="tx">  const { code } = getQuery(event)</span></div><div class="ln ln-add ln-hit"><span class="no">5</span><span class="mk">+</span><span class="tx">  const codes = JSON.parse(readFileSync(&#39;./data/discounts.json&#39;, &#39;utf8&#39;))</span></div><div class="ln ln-add"><span class="no">6</span><span class="mk">+</span><span class="tx">  const rows = await db.$queryRawUnsafe(`SELECT percent FROM discounts WHERE code = &#39;${code}&#39;`)</span></div><div class="ln ln-add"><span class="no">7</span><span class="mk">+</span><span class="tx">  return { percent: rows[0]?.percent ?? codes[code as string] ?? 0 }</span></div><div class="ln ln-add"><span class="no">8</span><span class="mk">+</span><span class="tx">})</span></div></div>
     
+    
     <div class="f-meta">Minor · <a href="#file-server-api-cart-discount-get-ts" data-open-file="server/api/cart/discount.get.ts">server/api/cart/discount.get.ts:5</a> · Static check <code>node/sync-fs</code></div>
   </div>
-</details><details class="finding" id="F15" data-sev="minor" data-cat="security">
-  <summary><svg class="sev sev-minor" width="14" height="14" viewBox="0 0 16 16" aria-label="Minor" role="img"><circle cx="8" cy="8" r="6"/></svg><span class="f-title">Request body used without validation</span><span class="tag cat-security">Security</span><span class="loc">index.post.ts:3</span></summary>
+</details><details class="finding" id="F15" data-sev="minor" data-cat="security" data-status="open">
+  <summary><svg class="sev sev-minor" width="14" height="14" viewBox="0 0 16 16" aria-label="Minor" role="img"><circle cx="8" cy="8" r="6"/></svg><span class="f-title">Request body used without validation</span><span class="anno-pill st-open"></span><span class="tag cat-security">Security</span><span class="loc">index.post.ts:3</span></summary>
   <div class="f-body">
     <p>Anything can be sent to this route. readValidatedBody or getValidatedQuery with a schema (e.g. zod) rejects bad input before it is used.</p>
     <div class="code"><div class="ln ln-add"><span class="no">1</span><span class="mk">+</span><span class="tx">export default defineEventHandler(async (event) =&gt; {</span></div><div class="ln ln-add"><span class="no">2</span><span class="mk">+</span><span class="tx">  const user = await requireUser(event)</span></div><div class="ln ln-add ln-hit"><span class="no">3</span><span class="mk">+</span><span class="tx">  const item = await readBody(event)</span></div><div class="ln ln-add"><span class="no">4</span><span class="mk">+</span><span class="tx">  console.log(&#39;saving cart item&#39;, item)</span></div><div class="ln ln-add"><span class="no">5</span><span class="mk">+</span><span class="tx">  return db.cart.upsert({</span></div><div class="ln ln-add"><span class="no">6</span><span class="mk">+</span><span class="tx">    where: { userId_itemId: { userId: user.id, itemId: item.id } },</span></div></div>
     
+    
     <div class="f-meta">Minor · <a href="#file-server-api-cart-index-post-ts" data-open-file="server/api/cart/index.post.ts">server/api/cart/index.post.ts:3</a> · Static check <code>nuxt/unvalidated-body</code></div>
   </div>
-</details><details class="finding" id="F14" data-sev="nit" data-cat="maintainability">
-  <summary><svg class="sev sev-nit" width="14" height="14" viewBox="0 0 16 16" aria-label="Nit" role="img"><circle cx="8" cy="8" r="3.5"/></svg><span class="f-title">console.log left in</span><span class="tag cat-maintainability">Maintainability</span><span class="loc">index.post.ts:4</span></summary>
+</details><details class="finding" id="F14" data-sev="nit" data-cat="maintainability" data-status="open">
+  <summary><svg class="sev sev-nit" width="14" height="14" viewBox="0 0 16 16" aria-label="Nit" role="img"><circle cx="8" cy="8" r="3.5"/></svg><span class="f-title">console.log left in</span><span class="anno-pill st-open"></span><span class="tag cat-maintainability">Maintainability</span><span class="loc">index.post.ts:4</span></summary>
   <div class="f-body">
     <p>Debug logging adds noise in production. Use the project logger or remove it.</p>
     <div class="code"><div class="ln ln-add"><span class="no">1</span><span class="mk">+</span><span class="tx">export default defineEventHandler(async (event) =&gt; {</span></div><div class="ln ln-add"><span class="no">2</span><span class="mk">+</span><span class="tx">  const user = await requireUser(event)</span></div><div class="ln ln-add"><span class="no">3</span><span class="mk">+</span><span class="tx">  const item = await readBody(event)</span></div><div class="ln ln-add ln-hit"><span class="no">4</span><span class="mk">+</span><span class="tx">  console.log(&#39;saving cart item&#39;, item)</span></div><div class="ln ln-add"><span class="no">5</span><span class="mk">+</span><span class="tx">  return db.cart.upsert({</span></div><div class="ln ln-add"><span class="no">6</span><span class="mk">+</span><span class="tx">    where: { userId_itemId: { userId: user.id, itemId: item.id } },</span></div><div class="ln ln-add"><span class="no">7</span><span class="mk">+</span><span class="tx">    create: { ...item, userId: user.id },</span></div></div>
+    
     
     <div class="f-meta">Nit · <a href="#file-server-api-cart-index-post-ts" data-open-file="server/api/cart/index.post.ts">server/api/cart/index.post.ts:4</a> · Static check <code>js/console</code></div>
   </div>
@@ -794,75 +819,84 @@ footer{margin-top:48px}
       </summary>
       <div class="m-body">
         <div class="m-files"><a class="m-file" href="#file-app-components-CartSummary-vue" data-open-file="app/components/CartSummary.vue"><span class="risk-pill" style="--rc:rgb(251 145 29)">59</span><span class="path"><span class="dir">app/components/</span>CartSummary.vue</span><span class="m-purpose">Updates UI for cart interactions</span></a><a class="m-file" href="#file-app-composables-useCart-ts" data-open-file="app/composables/useCart.ts"><span class="risk-pill" style="--rc:rgb(252 152 31)">56</span><span class="path"><span class="dir">app/composables/</span>useCart.ts</span><span class="m-purpose">Adds cart management methods and state</span></a></div>
-        <div class="list nested"><details class="finding" id="F4" data-sev="major" data-cat="bug">
-  <summary><svg class="sev sev-major" width="14" height="14" viewBox="0 0 16 16" aria-label="Major" role="img"><polygon points="8,1.5 15,14.5 1,14.5"/></svg><span class="f-title">Prop changed in the child</span><span class="tag cat-bug">Bug</span><span class="loc">CartSummary.vue:11</span></summary>
+        <div class="list nested"><details class="finding" id="F4" data-sev="major" data-cat="bug" data-status="open">
+  <summary><svg class="sev sev-major" width="14" height="14" viewBox="0 0 16 16" aria-label="Major" role="img"><polygon points="8,1.5 15,14.5 1,14.5"/></svg><span class="f-title">Prop changed in the child</span><span class="anno-pill st-open"></span><span class="tag cat-bug">Bug</span><span class="loc">CartSummary.vue:11</span></summary>
   <div class="f-body">
     <p>Props belong to the parent. Changing one here is overwritten on the next render. Emit an event, or use defineModel.</p>
     <div class="code"><div class="ln ln-add"><span class="no">8</span><span class="mk">+</span><span class="tx">  saving.value = true</span></div><div class="ln ln-add"><span class="no">9</span><span class="mk">+</span><span class="tx">  await save()</span></div><div class="ln ln-add"><span class="no">10</span><span class="mk">+</span><span class="tx">  saving.value = false</span></div><div class="ln ln-add ln-hit"><span class="no">11</span><span class="mk">+</span><span class="tx">  props.note = &#39;Saved&#39;</span></div><div class="ln ln-add"><span class="no">12</span><span class="mk">+</span><span class="tx">}</span></div><div class="ln ln-ctx"><span class="no">13</span><span class="mk"> </span><span class="tx">&lt;/script&gt;</span></div><div class="ln ln-ctx"><span class="no">14</span><span class="mk"> </span><span class="tx"> </span></div></div>
     
+    
     <div class="f-meta">Major · <a href="#file-app-components-CartSummary-vue" data-open-file="app/components/CartSummary.vue">app/components/CartSummary.vue:11</a> · Static check <code>vue/mutate-prop</code></div>
   </div>
-</details><details class="finding" id="F2" data-sev="major" data-cat="security">
-  <summary><svg class="sev sev-major" width="14" height="14" viewBox="0 0 16 16" aria-label="Major" role="img"><polygon points="8,1.5 15,14.5 1,14.5"/></svg><span class="f-title">v-html renders raw HTML</span><span class="tag cat-security">Security</span><span class="loc">CartSummary.vue:27</span></summary>
+</details><details class="finding" id="F2" data-sev="major" data-cat="security" data-status="open">
+  <summary><svg class="sev sev-major" width="14" height="14" viewBox="0 0 16 16" aria-label="Major" role="img"><polygon points="8,1.5 15,14.5 1,14.5"/></svg><span class="f-title">v-html renders raw HTML</span><span class="anno-pill st-open"></span><span class="tag cat-security">Security</span><span class="loc">CartSummary.vue:27</span></summary>
   <div class="f-body">
     <p>v-html skips Vue&#39;s escaping, so any user content in it can run scripts. Render text, or sanitise the HTML (e.g. with DOMPurify) first.</p>
     <div class="code"><div class="ln ln-ctx"><span class="no">24</span><span class="mk"> </span><span class="tx">    &lt;/ul&gt;</span></div><div class="ln ln-ctx"><span class="no">25</span><span class="mk"> </span><span class="tx">    &lt;p&gt;Total: {{ total.toFixed(2) }}&lt;/p&gt;</span></div><div class="ln ln-add"><span class="no">26</span><span class="mk">+</span><span class="tx">    &lt;p v-if=&quot;discount&quot;&gt;After discount: {{ grandTotal.toFixed(2) }}&lt;/p&gt;</span></div><div class="ln ln-add ln-hit"><span class="no">27</span><span class="mk">+</span><span class="tx">    &lt;div v-html=&quot;note&quot; /&gt;</span></div><div class="ln ln-add"><span class="no">28</span><span class="mk">+</span><span class="tx">    &lt;input v-model=&quot;code&quot; placeholder=&quot;Discount code&quot;&gt;</span></div><div class="ln ln-add"><span class="no">29</span><span class="mk">+</span><span class="tx">    &lt;button @click=&quot;applyCode(code)&quot;&gt;Apply&lt;/button&gt;</span></div><div class="ln ln-add"><span class="no">30</span><span class="mk">+</span><span class="tx">    &lt;button :disabled=&quot;saving&quot; @click=&quot;onSave&quot;&gt;Save cart for later&lt;/button&gt;</span></div></div>
     
+    
     <div class="f-meta">Major · <a href="#file-app-components-CartSummary-vue" data-open-file="app/components/CartSummary.vue">app/components/CartSummary.vue:27</a> · Static check <code>vue/v-html</code></div>
   </div>
-</details><details class="finding" id="F8" data-sev="major" data-cat="bug">
-  <summary><svg class="sev sev-major" width="14" height="14" viewBox="0 0 16 16" aria-label="Major" role="img"><polygon points="8,1.5 15,14.5 1,14.5"/></svg><span class="f-title">forEach with an async callback</span><span class="tag cat-bug">Bug</span><span class="loc">useCart.ts:24</span></summary>
+</details><details class="finding" id="F8" data-sev="major" data-cat="bug" data-status="open">
+  <summary><svg class="sev sev-major" width="14" height="14" viewBox="0 0 16 16" aria-label="Major" role="img"><polygon points="8,1.5 15,14.5 1,14.5"/></svg><span class="f-title">forEach with an async callback</span><span class="anno-pill st-open"></span><span class="tag cat-bug">Bug</span><span class="loc">useCart.ts:24</span></summary>
   <div class="f-body">
     <p>forEach does not wait for async callbacks, so the code after it runs before they finish and their errors are lost. Use for...of with await, or Promise.all with map.</p>
     <div class="code"><div class="ln ln-add"><span class="no">21</span><span class="mk">+</span><span class="tx">  }</span></div><div class="ln ln-add"><span class="no">22</span><span class="mk">+</span><span class="tx"> </span></div><div class="ln ln-add"><span class="no">23</span><span class="mk">+</span><span class="tx">  async function save() {</span></div><div class="ln ln-add ln-hit"><span class="no">24</span><span class="mk">+</span><span class="tx">    items.value.forEach(async (item) =&gt; {</span></div><div class="ln ln-add"><span class="no">25</span><span class="mk">+</span><span class="tx">      await $fetch(&#39;/api/cart&#39;, { method: &#39;POST&#39;, body: item })</span></div><div class="ln ln-add"><span class="no">26</span><span class="mk">+</span><span class="tx">    })</span></div><div class="ln ln-add"><span class="no">27</span><span class="mk">+</span><span class="tx">    localStorage.setItem(&#39;cart-saved-at&#39;, String(Date.now()))</span></div></div>
     <div class="fix"><div class="fix-label">Suggested change</div><div class="code"><div class="ln ln-del"><span class="mk">−</span><span class="tx">items.value.forEach(async (item) =&gt; {</span></div><div class="ln ln-add"><span class="mk">+</span><span class="tx">await Promise.all(items.value.map(async (item) =&gt; {</span></div></div></div>
+    
     <div class="f-meta">Major · <a href="#file-app-composables-useCart-ts" data-open-file="app/composables/useCart.ts">app/composables/useCart.ts:24</a> · Static check <code>js/foreach-async</code></div>
   </div>
-</details><details class="finding" id="F3" data-sev="minor" data-cat="bug">
-  <summary><svg class="sev sev-minor" width="14" height="14" viewBox="0 0 16 16" aria-label="Minor" role="img"><circle cx="8" cy="8" r="6"/></svg><span class="f-title">v-for without a key</span><span class="tag cat-bug">Bug</span><span class="loc">CartSummary.vue:19</span></summary>
+</details><details class="finding" id="F3" data-sev="minor" data-cat="bug" data-status="open">
+  <summary><svg class="sev sev-minor" width="14" height="14" viewBox="0 0 16 16" aria-label="Minor" role="img"><circle cx="8" cy="8" r="6"/></svg><span class="f-title">v-for without a key</span><span class="anno-pill st-open"></span><span class="tag cat-bug">Bug</span><span class="loc">CartSummary.vue:19</span></summary>
   <div class="f-body">
     <p>Without a :key Vue reuses elements by position, so component state and inputs can end up on the wrong item when the list changes.</p>
     <div class="code"><div class="ln ln-ctx"><span class="no">17</span><span class="mk"> </span><span class="tx">    &lt;h2&gt;Your cart&lt;/h2&gt;</span></div><div class="ln ln-ctx"><span class="no">18</span><span class="mk"> </span><span class="tx">    &lt;ul&gt;</span></div><div class="ln ln-del"><span class="no">9</span><span class="mk">−</span><span class="tx">      &lt;li v-for=&quot;item in items&quot; :key=&quot;item.id&quot;&gt;{{ item.name }} × {{ item.qty }}&lt;/li&gt;</span></div><div class="ln ln-add ln-hit"><span class="no">19</span><span class="mk">+</span><span class="tx">      &lt;li v-for=&quot;item in items&quot;&gt;</span></div><div class="ln ln-add"><span class="no">20</span><span class="mk">+</span><span class="tx">        &lt;img :src=&quot;`/img/${item.id}.webp`&quot;&gt;</span></div><div class="ln ln-add"><span class="no">21</span><span class="mk">+</span><span class="tx">        {{ item.name }} × {{ item.qty }}</span></div><div class="ln ln-add"><span class="no">22</span><span class="mk">+</span><span class="tx">        &lt;span class=&quot;remove&quot; @click=&quot;remove(item.id)&quot;&gt;Remove&lt;/span&gt;</span></div></div>
     
+    
     <div class="f-meta">Minor · <a href="#file-app-components-CartSummary-vue" data-open-file="app/components/CartSummary.vue">app/components/CartSummary.vue:19</a> · Static check <code>vue/v-for-key</code></div>
   </div>
-</details><details class="finding" id="F5" data-sev="minor" data-cat="accessibility">
-  <summary><svg class="sev sev-minor" width="14" height="14" viewBox="0 0 16 16" aria-label="Minor" role="img"><circle cx="8" cy="8" r="6"/></svg><span class="f-title">Image without alt text</span><span class="tag cat-accessibility">Accessibility</span><span class="loc">CartSummary.vue:20</span></summary>
+</details><details class="finding" id="F5" data-sev="minor" data-cat="accessibility" data-status="open">
+  <summary><svg class="sev sev-minor" width="14" height="14" viewBox="0 0 16 16" aria-label="Minor" role="img"><circle cx="8" cy="8" r="6"/></svg><span class="f-title">Image without alt text</span><span class="anno-pill st-open"></span><span class="tag cat-accessibility">Accessibility</span><span class="loc">CartSummary.vue:20</span></summary>
   <div class="f-body">
     <p>Screen readers need alt text. Use alt=&quot;&quot; for decorative images.</p>
     <div class="code"><div class="ln ln-ctx"><span class="no">18</span><span class="mk"> </span><span class="tx">    &lt;ul&gt;</span></div><div class="ln ln-del"><span class="no">9</span><span class="mk">−</span><span class="tx">      &lt;li v-for=&quot;item in items&quot; :key=&quot;item.id&quot;&gt;{{ item.name }} × {{ item.qty }}&lt;/li&gt;</span></div><div class="ln ln-add"><span class="no">19</span><span class="mk">+</span><span class="tx">      &lt;li v-for=&quot;item in items&quot;&gt;</span></div><div class="ln ln-add ln-hit"><span class="no">20</span><span class="mk">+</span><span class="tx">        &lt;img :src=&quot;`/img/${item.id}.webp`&quot;&gt;</span></div><div class="ln ln-add"><span class="no">21</span><span class="mk">+</span><span class="tx">        {{ item.name }} × {{ item.qty }}</span></div><div class="ln ln-add"><span class="no">22</span><span class="mk">+</span><span class="tx">        &lt;span class=&quot;remove&quot; @click=&quot;remove(item.id)&quot;&gt;Remove&lt;/span&gt;</span></div><div class="ln ln-add"><span class="no">23</span><span class="mk">+</span><span class="tx">      &lt;/li&gt;</span></div></div>
     
+    
     <div class="f-meta">Minor · <a href="#file-app-components-CartSummary-vue" data-open-file="app/components/CartSummary.vue">app/components/CartSummary.vue:20</a> · Static check <code>vue/img-alt</code></div>
   </div>
-</details><details class="finding" id="F6" data-sev="minor" data-cat="accessibility">
-  <summary><svg class="sev sev-minor" width="14" height="14" viewBox="0 0 16 16" aria-label="Minor" role="img"><circle cx="8" cy="8" r="6"/></svg><span class="f-title">Click handler on a non-button</span><span class="tag cat-accessibility">Accessibility</span><span class="loc">CartSummary.vue:22</span></summary>
+</details><details class="finding" id="F6" data-sev="minor" data-cat="accessibility" data-status="open">
+  <summary><svg class="sev sev-minor" width="14" height="14" viewBox="0 0 16 16" aria-label="Minor" role="img"><circle cx="8" cy="8" r="6"/></svg><span class="f-title">Click handler on a non-button</span><span class="anno-pill st-open"></span><span class="tag cat-accessibility">Accessibility</span><span class="loc">CartSummary.vue:22</span></summary>
   <div class="f-body">
     <p>Keyboard users cannot reach or press this. Use a &lt;button&gt;, or add role=&quot;button&quot;, tabindex=&quot;0&quot; and a key handler.</p>
     <div class="code"><div class="ln ln-add"><span class="no">19</span><span class="mk">+</span><span class="tx">      &lt;li v-for=&quot;item in items&quot;&gt;</span></div><div class="ln ln-add"><span class="no">20</span><span class="mk">+</span><span class="tx">        &lt;img :src=&quot;`/img/${item.id}.webp`&quot;&gt;</span></div><div class="ln ln-add"><span class="no">21</span><span class="mk">+</span><span class="tx">        {{ item.name }} × {{ item.qty }}</span></div><div class="ln ln-add ln-hit"><span class="no">22</span><span class="mk">+</span><span class="tx">        &lt;span class=&quot;remove&quot; @click=&quot;remove(item.id)&quot;&gt;Remove&lt;/span&gt;</span></div><div class="ln ln-add"><span class="no">23</span><span class="mk">+</span><span class="tx">      &lt;/li&gt;</span></div><div class="ln ln-ctx"><span class="no">24</span><span class="mk"> </span><span class="tx">    &lt;/ul&gt;</span></div><div class="ln ln-ctx"><span class="no">25</span><span class="mk"> </span><span class="tx">    &lt;p&gt;Total: {{ total.toFixed(2) }}&lt;/p&gt;</span></div></div>
     
+    
     <div class="f-meta">Minor · <a href="#file-app-components-CartSummary-vue" data-open-file="app/components/CartSummary.vue">app/components/CartSummary.vue:22</a> · Static check <code>vue/click-on-div</code></div>
   </div>
-</details><details class="finding" id="F7" data-sev="minor" data-cat="bug">
-  <summary><svg class="sev sev-minor" width="14" height="14" viewBox="0 0 16 16" aria-label="Minor" role="img"><circle cx="8" cy="8" r="6"/></svg><span class="f-title">Loose equality</span><span class="tag cat-bug">Bug</span><span class="loc">useCart.ts:20</span></summary>
+</details><details class="finding" id="F7" data-sev="minor" data-cat="bug" data-status="open">
+  <summary><svg class="sev sev-minor" width="14" height="14" viewBox="0 0 16 16" aria-label="Minor" role="img"><circle cx="8" cy="8" r="6"/></svg><span class="f-title">Loose equality</span><span class="anno-pill st-open"></span><span class="tag cat-bug">Bug</span><span class="loc">useCart.ts:20</span></summary>
   <div class="f-body">
     <p>!= converts types before comparing, so 0 == &#39;&#39; is true. Use !== unless the conversion is wanted.</p>
     <div class="code"><div class="ln ln-ctx"><span class="no">18</span><span class="mk"> </span><span class="tx"> </span></div><div class="ln ln-del"><span class="no">18</span><span class="mk">−</span><span class="tx">  return { items, total, add }</span></div><div class="ln ln-add"><span class="no">19</span><span class="mk">+</span><span class="tx">  function remove(id: string) {</span></div><div class="ln ln-add ln-hit"><span class="no">20</span><span class="mk">+</span><span class="tx">    items.value = items.value.filter(i =&gt; i.id != id)</span></div><div class="ln ln-add"><span class="no">21</span><span class="mk">+</span><span class="tx">  }</span></div><div class="ln ln-add"><span class="no">22</span><span class="mk">+</span><span class="tx"> </span></div><div class="ln ln-add"><span class="no">23</span><span class="mk">+</span><span class="tx">  async function save() {</span></div></div>
     <div class="fix"><div class="fix-label">Suggested change</div><div class="code"><div class="ln ln-del"><span class="mk">−</span><span class="tx">items.value = items.value.filter(i =&gt; i.id != id)</span></div><div class="ln ln-add"><span class="mk">+</span><span class="tx">items.value = items.value.filter(i =&gt; i.id !== id)</span></div></div></div>
+    
     <div class="f-meta">Minor · <a href="#file-app-composables-useCart-ts" data-open-file="app/composables/useCart.ts">app/composables/useCart.ts:20</a> · Static check <code>js/loose-equality</code></div>
   </div>
-</details><details class="finding" id="F10" data-sev="minor" data-cat="bug">
-  <summary><svg class="sev sev-minor" width="14" height="14" viewBox="0 0 16 16" aria-label="Minor" role="img"><circle cx="8" cy="8" r="6"/></svg><span class="f-title">Browser-only API during server render</span><span class="tag cat-bug">Bug</span><span class="loc">useCart.ts:27</span></summary>
+</details><details class="finding" id="F10" data-sev="minor" data-cat="bug" data-status="open">
+  <summary><svg class="sev sev-minor" width="14" height="14" viewBox="0 0 16 16" aria-label="Minor" role="img"><circle cx="8" cy="8" r="6"/></svg><span class="f-title">Browser-only API during server render</span><span class="anno-pill st-open"></span><span class="tag cat-bug">Bug</span><span class="loc">useCart.ts:27</span></summary>
   <div class="f-body">
     <p>window, document and localStorage do not exist while the page renders on the server. Use them inside onMounted or behind import.meta.client.</p>
     <div class="code"><div class="ln ln-add"><span class="no">24</span><span class="mk">+</span><span class="tx">    items.value.forEach(async (item) =&gt; {</span></div><div class="ln ln-add"><span class="no">25</span><span class="mk">+</span><span class="tx">      await $fetch(&#39;/api/cart&#39;, { method: &#39;POST&#39;, body: item })</span></div><div class="ln ln-add"><span class="no">26</span><span class="mk">+</span><span class="tx">    })</span></div><div class="ln ln-add ln-hit"><span class="no">27</span><span class="mk">+</span><span class="tx">    localStorage.setItem(&#39;cart-saved-at&#39;, String(Date.now()))</span></div><div class="ln ln-add"><span class="no">28</span><span class="mk">+</span><span class="tx">  }</span></div><div class="ln ln-add"><span class="no">29</span><span class="mk">+</span><span class="tx"> </span></div><div class="ln ln-add"><span class="no">30</span><span class="mk">+</span><span class="tx">  async function applyCode(code: string) {</span></div></div>
     
+    
     <div class="f-meta">Minor · <a href="#file-app-composables-useCart-ts" data-open-file="app/composables/useCart.ts">app/composables/useCart.ts:27</a> · Static check <code>nuxt/browser-global</code></div>
   </div>
-</details><details class="finding" id="F9" data-sev="minor" data-cat="maintainability">
-  <summary><svg class="sev sev-minor" width="14" height="14" viewBox="0 0 16 16" aria-label="Minor" role="img"><circle cx="8" cy="8" r="6"/></svg><span class="f-title">Type set to any</span><span class="tag cat-maintainability">Maintainability</span><span class="loc">useCart.ts:31</span></summary>
+</details><details class="finding" id="F9" data-sev="minor" data-cat="maintainability" data-status="open">
+  <summary><svg class="sev sev-minor" width="14" height="14" viewBox="0 0 16 16" aria-label="Minor" role="img"><circle cx="8" cy="8" r="6"/></svg><span class="f-title">Type set to any</span><span class="anno-pill st-open"></span><span class="tag cat-maintainability">Maintainability</span><span class="loc">useCart.ts:31</span></summary>
   <div class="f-body">
     <p>any switches off type checking for this value and everything it touches. Use unknown and narrow it, or write the type.</p>
     <div class="code"><div class="ln ln-add"><span class="no">28</span><span class="mk">+</span><span class="tx">  }</span></div><div class="ln ln-add"><span class="no">29</span><span class="mk">+</span><span class="tx"> </span></div><div class="ln ln-add"><span class="no">30</span><span class="mk">+</span><span class="tx">  async function applyCode(code: string) {</span></div><div class="ln ln-add ln-hit"><span class="no">31</span><span class="mk">+</span><span class="tx">    const res: any = await $fetch(`/api/cart/discount?code=${code}`)</span></div><div class="ln ln-add"><span class="no">32</span><span class="mk">+</span><span class="tx">    discount.value = res.percent</span></div><div class="ln ln-add"><span class="no">33</span><span class="mk">+</span><span class="tx">  }</span></div><div class="ln ln-add"><span class="no">34</span><span class="mk">+</span><span class="tx"> </span></div></div>
+    
     
     <div class="f-meta">Minor · <a href="#file-app-composables-useCart-ts" data-open-file="app/composables/useCart.ts">app/composables/useCart.ts:31</a> · Static check <code>ts/any</code></div>
   </div>
@@ -878,11 +912,12 @@ footer{margin-top:48px}
       </summary>
       <div class="m-body">
         <div class="m-files"><a class="m-file" href="#file--claude-settings-json" data-open-file=".claude/settings.json"><span class="risk-pill" style="--rc:rgb(253 157 32)">54</span><span class="path"><span class="dir">.claude/</span>settings.json</span><span class="m-purpose">Configures agent permissions and hooks</span></a><a class="m-file" href="#file--claude-skills-cart-api-SKILL-md" data-open-file=".claude/skills/cart-api/SKILL.md"><span class="risk-pill" style="--rc:rgb(112 168 86)">14</span><span class="path"><span class="dir">.claude/skills/cart-api/</span>SKILL.md</span><span class="m-purpose">Defines agent skill for cart API</span></a><a class="m-file" href="#file-CLAUDE-md" data-open-file="CLAUDE.md"><span class="risk-pill" style="--rc:rgb(108 168 87)">13</span><span class="path"><span class="dir"></span>CLAUDE.md</span><span class="m-purpose">Adds project instructions for agents</span></a></div>
-        <div class="list nested"><details class="finding" id="F1" data-sev="major" data-cat="security">
-  <summary><svg class="sev sev-major" width="14" height="14" viewBox="0 0 16 16" aria-label="Major" role="img"><polygon points="8,1.5 15,14.5 1,14.5"/></svg><span class="f-title">Agent may run any shell command</span><span class="tag cat-security">Security</span><span class="loc">settings.json:3</span></summary>
+        <div class="list nested"><details class="finding" id="F1" data-sev="major" data-cat="security" data-status="open">
+  <summary><svg class="sev sev-major" width="14" height="14" viewBox="0 0 16 16" aria-label="Major" role="img"><polygon points="8,1.5 15,14.5 1,14.5"/></svg><span class="f-title">Agent may run any shell command</span><span class="anno-pill st-open"></span><span class="tag cat-security">Security</span><span class="loc">settings.json:3</span></summary>
   <div class="f-body">
     <p>This allows every shell command without asking, including ones that delete files or send data out. Allow the specific commands the work needs instead, such as &quot;Bash(yarn test)&quot;.</p>
     <div class="code"><div class="ln ln-add"><span class="no">1</span><span class="mk">+</span><span class="tx">{</span></div><div class="ln ln-add"><span class="no">2</span><span class="mk">+</span><span class="tx">  &quot;permissions&quot;: {</span></div><div class="ln ln-add ln-hit"><span class="no">3</span><span class="mk">+</span><span class="tx">    &quot;allow&quot;: [&quot;Bash(yarn *)&quot;, &quot;Bash(*)&quot;]</span></div><div class="ln ln-add"><span class="no">4</span><span class="mk">+</span><span class="tx">  },</span></div><div class="ln ln-add"><span class="no">5</span><span class="mk">+</span><span class="tx">  &quot;hooks&quot;: {</span></div><div class="ln ln-add"><span class="no">6</span><span class="mk">+</span><span class="tx">    &quot;PostToolUse&quot;: [{ &quot;matcher&quot;: &quot;Edit&quot;, &quot;hooks&quot;: [{ &quot;type&quot;: &quot;command&quot;, &quot;command&quot;: &quot;yarn lint --fix&quot; }] }]</span></div></div>
+    
     
     <div class="f-meta">Major · <a href="#file--claude-settings-json" data-open-file=".claude/settings.json">.claude/settings.json:3</a> · Static check <code>agents/any-shell</code></div>
   </div>
@@ -898,12 +933,13 @@ footer{margin-top:48px}
       </summary>
       <div class="m-body">
         <div class="m-files"><a class="m-file" href="#file-test-cart-test-ts" data-open-file="test/cart.test.ts"><span class="risk-pill" style="--rc:rgb(145 171 74)">21</span><span class="path"><span class="dir">test/</span>cart.test.ts</span><span class="m-purpose">Updates test execution</span></a></div>
-        <div class="list nested"><details class="finding" id="F16" data-sev="major" data-cat="tests">
-  <summary><svg class="sev sev-major" width="14" height="14" viewBox="0 0 16 16" aria-label="Major" role="img"><polygon points="8,1.5 15,14.5 1,14.5"/></svg><span class="f-title">Focused test left in</span><span class="tag cat-tests">Tests</span><span class="loc">cart.test.ts:4</span></summary>
+        <div class="list nested"><details class="finding" id="F16" data-sev="major" data-cat="tests" data-status="open">
+  <summary><svg class="sev sev-major" width="14" height="14" viewBox="0 0 16 16" aria-label="Major" role="img"><polygon points="8,1.5 15,14.5 1,14.5"/></svg><span class="f-title">Focused test left in</span><span class="anno-pill st-open"></span><span class="tag cat-tests">Tests</span><span class="loc">cart.test.ts:4</span></summary>
   <div class="f-body">
     <p>.only makes the runner skip every other test in the file, so CI can pass while tests are not run.</p>
     <div class="code"><div class="ln ln-ctx"><span class="no">2</span><span class="mk"> </span><span class="tx"> </span></div><div class="ln ln-ctx"><span class="no">3</span><span class="mk"> </span><span class="tx">describe(&#39;cart total&#39;, () =&gt; {</span></div><div class="ln ln-del"><span class="no">4</span><span class="mk">−</span><span class="tx">  it(&#39;adds prices&#39;, () =&gt; {</span></div><div class="ln ln-add ln-hit"><span class="no">4</span><span class="mk">+</span><span class="tx">  it.only(&#39;adds prices&#39;, () =&gt; {</span></div><div class="ln ln-ctx"><span class="no">5</span><span class="mk"> </span><span class="tx">    expect(1 + 1).toBe(2)</span></div><div class="ln ln-ctx"><span class="no">6</span><span class="mk"> </span><span class="tx">  })</span></div><div class="ln ln-ctx"><span class="no">7</span><span class="mk"> </span><span class="tx">})</span></div></div>
     <div class="fix"><div class="fix-label">Suggested change</div><div class="code"><div class="ln ln-del"><span class="mk">−</span><span class="tx">it.only(&#39;adds prices&#39;, () =&gt; {</span></div><div class="ln ln-add"><span class="mk">+</span><span class="tx">it(&#39;adds prices&#39;, () =&gt; {</span></div></div></div>
+    
     <div class="f-meta">Major · <a href="#file-test-cart-test-ts" data-open-file="test/cart.test.ts">test/cart.test.ts:4</a> · Static check <code>js/only-test</code></div>
   </div>
 </details></div>
@@ -958,134 +994,223 @@ footer{margin-top:48px}
     <div class="tab-body" data-for="tab-findings"><div class="filters" role="toolbar" aria-label="Filter findings">
         <button class="chip on" data-filter-sev="" data-filter-cat="">All <b>16</b></button>
         <button class="chip" data-filter-sev="blocker" data-filter-cat=""><svg class="sev sev-blocker" width="12" height="12" viewBox="0 0 16 16" aria-label="Blocker" role="img"><polygon points="5,1 11,1 15,5 15,11 11,15 5,15 1,11 1,5"/></svg> Blocker <b>1</b></button><button class="chip" data-filter-sev="major" data-filter-cat=""><svg class="sev sev-major" width="12" height="12" viewBox="0 0 16 16" aria-label="Major" role="img"><polygon points="8,1.5 15,14.5 1,14.5"/></svg> Major <b>5</b></button><button class="chip" data-filter-sev="minor" data-filter-cat=""><svg class="sev sev-minor" width="12" height="12" viewBox="0 0 16 16" aria-label="Minor" role="img"><circle cx="8" cy="8" r="6"/></svg> Minor <b>9</b></button><button class="chip" data-filter-sev="nit" data-filter-cat=""><svg class="sev sev-nit" width="12" height="12" viewBox="0 0 16 16" aria-label="Nit" role="img"><circle cx="8" cy="8" r="3.5"/></svg> Nit <b>1</b></button>
+        <button class="chip" data-filter-todo>To handle <b class="todo-n">16</b></button>
         <span class="sp"></span><button class="chip ghost" data-expand="findings">Expand all</button>
       </div>
-      <div class="list" id="findings-list"><details class="finding" id="F13" data-sev="blocker" data-cat="security">
-  <summary><svg class="sev sev-blocker" width="14" height="14" viewBox="0 0 16 16" aria-label="Blocker" role="img"><polygon points="5,1 11,1 15,5 15,11 11,15 5,15 1,11 1,5"/></svg><span class="f-title">SQL built from a string</span><span class="tag cat-security">Security</span><span class="loc">discount.get.ts:6</span></summary>
+      <div class="feedback" data-key="feature/saved-carts" data-title="Save carts for later and apply discount codes">
+        <span class="fb-counts"><span class="fb-c st-open" data-fb="open"><i></i>Open <b>16</b></span><span class="fb-c st-agreed" data-fb="agreed"><i></i>Agreed <b>0</b></span><span class="fb-c st-fixed" data-fb="fixed"><i></i>Fixed <b>0</b></span><span class="fb-c st-wont-fix" data-fb="wont-fix"><i></i>Won't fix <b>0</b></span><span class="fb-c st-discuss" data-fb="discuss"><i></i>Discuss <b>0</b></span></span>
+        <span class="sp"></span>
+        <input class="fb-name" placeholder="Your name" aria-label="Your name" size="12">
+        <button class="chip ghost" data-fb-copy>Copy as Markdown</button>
+        <button class="chip ghost" data-fb-export>Export notes</button>
+        <label class="chip ghost">Import<input type="file" accept=".json,application/json" data-fb-import hidden></label>
+      </div>
+      <div class="list" id="findings-list"><details class="finding" id="F13" data-sev="blocker" data-cat="security" data-status="open">
+  <summary><svg class="sev sev-blocker" width="14" height="14" viewBox="0 0 16 16" aria-label="Blocker" role="img"><polygon points="5,1 11,1 15,5 15,11 11,15 5,15 1,11 1,5"/></svg><span class="f-title">SQL built from a string</span><span class="anno-pill st-open"></span><span class="tag cat-security">Security</span><span class="loc">discount.get.ts:6</span></summary>
   <div class="f-body">
     <p>Joining values into SQL allows SQL injection. Use parameters (?, $1) or a tagged sql`` helper.</p>
     <div class="code"><div class="ln ln-add"><span class="no">3</span><span class="mk">+</span><span class="tx">export default defineEventHandler(async (event) =&gt; {</span></div><div class="ln ln-add"><span class="no">4</span><span class="mk">+</span><span class="tx">  const { code } = getQuery(event)</span></div><div class="ln ln-add"><span class="no">5</span><span class="mk">+</span><span class="tx">  const codes = JSON.parse(readFileSync(&#39;./data/discounts.json&#39;, &#39;utf8&#39;))</span></div><div class="ln ln-add ln-hit"><span class="no">6</span><span class="mk">+</span><span class="tx">  const rows = await db.$queryRawUnsafe(`SELECT percent FROM discounts WHERE code = &#39;${code}&#39;`)</span></div><div class="ln ln-add"><span class="no">7</span><span class="mk">+</span><span class="tx">  return { percent: rows[0]?.percent ?? codes[code as string] ?? 0 }</span></div><div class="ln ln-add"><span class="no">8</span><span class="mk">+</span><span class="tx">})</span></div></div>
     
+    <div class="anno" data-anno="F13">
+    <div class="anno-st" role="group" aria-label="Status"><button type="button" class="st-open on" data-anno-status="open">Open</button><button type="button" class="st-agreed" data-anno-status="agreed">Agreed</button><button type="button" class="st-fixed" data-anno-status="fixed">Fixed</button><button type="button" class="st-wont-fix" data-anno-status="wont-fix">Won't fix</button><button type="button" class="st-discuss" data-anno-status="discuss">Discuss</button></div>
+    <textarea class="anno-note" rows="2" placeholder="Add a note: why, who will fix it, a link..."></textarea>
+    <div class="anno-by muted"></div>
+  </div>
     <div class="f-meta">Blocker · <a href="#file-server-api-cart-discount-get-ts" data-open-file="server/api/cart/discount.get.ts">server/api/cart/discount.get.ts:6</a> · Static check <code>node/sql-concat</code></div>
   </div>
-</details><details class="finding" id="F1" data-sev="major" data-cat="security">
-  <summary><svg class="sev sev-major" width="14" height="14" viewBox="0 0 16 16" aria-label="Major" role="img"><polygon points="8,1.5 15,14.5 1,14.5"/></svg><span class="f-title">Agent may run any shell command</span><span class="tag cat-security">Security</span><span class="loc">settings.json:3</span></summary>
+</details><details class="finding" id="F1" data-sev="major" data-cat="security" data-status="open">
+  <summary><svg class="sev sev-major" width="14" height="14" viewBox="0 0 16 16" aria-label="Major" role="img"><polygon points="8,1.5 15,14.5 1,14.5"/></svg><span class="f-title">Agent may run any shell command</span><span class="anno-pill st-open"></span><span class="tag cat-security">Security</span><span class="loc">settings.json:3</span></summary>
   <div class="f-body">
     <p>This allows every shell command without asking, including ones that delete files or send data out. Allow the specific commands the work needs instead, such as &quot;Bash(yarn test)&quot;.</p>
     <div class="code"><div class="ln ln-add"><span class="no">1</span><span class="mk">+</span><span class="tx">{</span></div><div class="ln ln-add"><span class="no">2</span><span class="mk">+</span><span class="tx">  &quot;permissions&quot;: {</span></div><div class="ln ln-add ln-hit"><span class="no">3</span><span class="mk">+</span><span class="tx">    &quot;allow&quot;: [&quot;Bash(yarn *)&quot;, &quot;Bash(*)&quot;]</span></div><div class="ln ln-add"><span class="no">4</span><span class="mk">+</span><span class="tx">  },</span></div><div class="ln ln-add"><span class="no">5</span><span class="mk">+</span><span class="tx">  &quot;hooks&quot;: {</span></div><div class="ln ln-add"><span class="no">6</span><span class="mk">+</span><span class="tx">    &quot;PostToolUse&quot;: [{ &quot;matcher&quot;: &quot;Edit&quot;, &quot;hooks&quot;: [{ &quot;type&quot;: &quot;command&quot;, &quot;command&quot;: &quot;yarn lint --fix&quot; }] }]</span></div></div>
     
+    <div class="anno" data-anno="F1">
+    <div class="anno-st" role="group" aria-label="Status"><button type="button" class="st-open on" data-anno-status="open">Open</button><button type="button" class="st-agreed" data-anno-status="agreed">Agreed</button><button type="button" class="st-fixed" data-anno-status="fixed">Fixed</button><button type="button" class="st-wont-fix" data-anno-status="wont-fix">Won't fix</button><button type="button" class="st-discuss" data-anno-status="discuss">Discuss</button></div>
+    <textarea class="anno-note" rows="2" placeholder="Add a note: why, who will fix it, a link..."></textarea>
+    <div class="anno-by muted"></div>
+  </div>
     <div class="f-meta">Major · <a href="#file--claude-settings-json" data-open-file=".claude/settings.json">.claude/settings.json:3</a> · Static check <code>agents/any-shell</code></div>
   </div>
-</details><details class="finding" id="F4" data-sev="major" data-cat="bug">
-  <summary><svg class="sev sev-major" width="14" height="14" viewBox="0 0 16 16" aria-label="Major" role="img"><polygon points="8,1.5 15,14.5 1,14.5"/></svg><span class="f-title">Prop changed in the child</span><span class="tag cat-bug">Bug</span><span class="loc">CartSummary.vue:11</span></summary>
+</details><details class="finding" id="F4" data-sev="major" data-cat="bug" data-status="open">
+  <summary><svg class="sev sev-major" width="14" height="14" viewBox="0 0 16 16" aria-label="Major" role="img"><polygon points="8,1.5 15,14.5 1,14.5"/></svg><span class="f-title">Prop changed in the child</span><span class="anno-pill st-open"></span><span class="tag cat-bug">Bug</span><span class="loc">CartSummary.vue:11</span></summary>
   <div class="f-body">
     <p>Props belong to the parent. Changing one here is overwritten on the next render. Emit an event, or use defineModel.</p>
     <div class="code"><div class="ln ln-add"><span class="no">8</span><span class="mk">+</span><span class="tx">  saving.value = true</span></div><div class="ln ln-add"><span class="no">9</span><span class="mk">+</span><span class="tx">  await save()</span></div><div class="ln ln-add"><span class="no">10</span><span class="mk">+</span><span class="tx">  saving.value = false</span></div><div class="ln ln-add ln-hit"><span class="no">11</span><span class="mk">+</span><span class="tx">  props.note = &#39;Saved&#39;</span></div><div class="ln ln-add"><span class="no">12</span><span class="mk">+</span><span class="tx">}</span></div><div class="ln ln-ctx"><span class="no">13</span><span class="mk"> </span><span class="tx">&lt;/script&gt;</span></div><div class="ln ln-ctx"><span class="no">14</span><span class="mk"> </span><span class="tx"> </span></div></div>
     
+    <div class="anno" data-anno="F4">
+    <div class="anno-st" role="group" aria-label="Status"><button type="button" class="st-open on" data-anno-status="open">Open</button><button type="button" class="st-agreed" data-anno-status="agreed">Agreed</button><button type="button" class="st-fixed" data-anno-status="fixed">Fixed</button><button type="button" class="st-wont-fix" data-anno-status="wont-fix">Won't fix</button><button type="button" class="st-discuss" data-anno-status="discuss">Discuss</button></div>
+    <textarea class="anno-note" rows="2" placeholder="Add a note: why, who will fix it, a link..."></textarea>
+    <div class="anno-by muted"></div>
+  </div>
     <div class="f-meta">Major · <a href="#file-app-components-CartSummary-vue" data-open-file="app/components/CartSummary.vue">app/components/CartSummary.vue:11</a> · Static check <code>vue/mutate-prop</code></div>
   </div>
-</details><details class="finding" id="F2" data-sev="major" data-cat="security">
-  <summary><svg class="sev sev-major" width="14" height="14" viewBox="0 0 16 16" aria-label="Major" role="img"><polygon points="8,1.5 15,14.5 1,14.5"/></svg><span class="f-title">v-html renders raw HTML</span><span class="tag cat-security">Security</span><span class="loc">CartSummary.vue:27</span></summary>
+</details><details class="finding" id="F2" data-sev="major" data-cat="security" data-status="open">
+  <summary><svg class="sev sev-major" width="14" height="14" viewBox="0 0 16 16" aria-label="Major" role="img"><polygon points="8,1.5 15,14.5 1,14.5"/></svg><span class="f-title">v-html renders raw HTML</span><span class="anno-pill st-open"></span><span class="tag cat-security">Security</span><span class="loc">CartSummary.vue:27</span></summary>
   <div class="f-body">
     <p>v-html skips Vue&#39;s escaping, so any user content in it can run scripts. Render text, or sanitise the HTML (e.g. with DOMPurify) first.</p>
     <div class="code"><div class="ln ln-ctx"><span class="no">24</span><span class="mk"> </span><span class="tx">    &lt;/ul&gt;</span></div><div class="ln ln-ctx"><span class="no">25</span><span class="mk"> </span><span class="tx">    &lt;p&gt;Total: {{ total.toFixed(2) }}&lt;/p&gt;</span></div><div class="ln ln-add"><span class="no">26</span><span class="mk">+</span><span class="tx">    &lt;p v-if=&quot;discount&quot;&gt;After discount: {{ grandTotal.toFixed(2) }}&lt;/p&gt;</span></div><div class="ln ln-add ln-hit"><span class="no">27</span><span class="mk">+</span><span class="tx">    &lt;div v-html=&quot;note&quot; /&gt;</span></div><div class="ln ln-add"><span class="no">28</span><span class="mk">+</span><span class="tx">    &lt;input v-model=&quot;code&quot; placeholder=&quot;Discount code&quot;&gt;</span></div><div class="ln ln-add"><span class="no">29</span><span class="mk">+</span><span class="tx">    &lt;button @click=&quot;applyCode(code)&quot;&gt;Apply&lt;/button&gt;</span></div><div class="ln ln-add"><span class="no">30</span><span class="mk">+</span><span class="tx">    &lt;button :disabled=&quot;saving&quot; @click=&quot;onSave&quot;&gt;Save cart for later&lt;/button&gt;</span></div></div>
     
+    <div class="anno" data-anno="F2">
+    <div class="anno-st" role="group" aria-label="Status"><button type="button" class="st-open on" data-anno-status="open">Open</button><button type="button" class="st-agreed" data-anno-status="agreed">Agreed</button><button type="button" class="st-fixed" data-anno-status="fixed">Fixed</button><button type="button" class="st-wont-fix" data-anno-status="wont-fix">Won't fix</button><button type="button" class="st-discuss" data-anno-status="discuss">Discuss</button></div>
+    <textarea class="anno-note" rows="2" placeholder="Add a note: why, who will fix it, a link..."></textarea>
+    <div class="anno-by muted"></div>
+  </div>
     <div class="f-meta">Major · <a href="#file-app-components-CartSummary-vue" data-open-file="app/components/CartSummary.vue">app/components/CartSummary.vue:27</a> · Static check <code>vue/v-html</code></div>
   </div>
-</details><details class="finding" id="F8" data-sev="major" data-cat="bug">
-  <summary><svg class="sev sev-major" width="14" height="14" viewBox="0 0 16 16" aria-label="Major" role="img"><polygon points="8,1.5 15,14.5 1,14.5"/></svg><span class="f-title">forEach with an async callback</span><span class="tag cat-bug">Bug</span><span class="loc">useCart.ts:24</span></summary>
+</details><details class="finding" id="F8" data-sev="major" data-cat="bug" data-status="open">
+  <summary><svg class="sev sev-major" width="14" height="14" viewBox="0 0 16 16" aria-label="Major" role="img"><polygon points="8,1.5 15,14.5 1,14.5"/></svg><span class="f-title">forEach with an async callback</span><span class="anno-pill st-open"></span><span class="tag cat-bug">Bug</span><span class="loc">useCart.ts:24</span></summary>
   <div class="f-body">
     <p>forEach does not wait for async callbacks, so the code after it runs before they finish and their errors are lost. Use for...of with await, or Promise.all with map.</p>
     <div class="code"><div class="ln ln-add"><span class="no">21</span><span class="mk">+</span><span class="tx">  }</span></div><div class="ln ln-add"><span class="no">22</span><span class="mk">+</span><span class="tx"> </span></div><div class="ln ln-add"><span class="no">23</span><span class="mk">+</span><span class="tx">  async function save() {</span></div><div class="ln ln-add ln-hit"><span class="no">24</span><span class="mk">+</span><span class="tx">    items.value.forEach(async (item) =&gt; {</span></div><div class="ln ln-add"><span class="no">25</span><span class="mk">+</span><span class="tx">      await $fetch(&#39;/api/cart&#39;, { method: &#39;POST&#39;, body: item })</span></div><div class="ln ln-add"><span class="no">26</span><span class="mk">+</span><span class="tx">    })</span></div><div class="ln ln-add"><span class="no">27</span><span class="mk">+</span><span class="tx">    localStorage.setItem(&#39;cart-saved-at&#39;, String(Date.now()))</span></div></div>
     <div class="fix"><div class="fix-label">Suggested change</div><div class="code"><div class="ln ln-del"><span class="mk">−</span><span class="tx">items.value.forEach(async (item) =&gt; {</span></div><div class="ln ln-add"><span class="mk">+</span><span class="tx">await Promise.all(items.value.map(async (item) =&gt; {</span></div></div></div>
+    <div class="anno" data-anno="F8">
+    <div class="anno-st" role="group" aria-label="Status"><button type="button" class="st-open on" data-anno-status="open">Open</button><button type="button" class="st-agreed" data-anno-status="agreed">Agreed</button><button type="button" class="st-fixed" data-anno-status="fixed">Fixed</button><button type="button" class="st-wont-fix" data-anno-status="wont-fix">Won't fix</button><button type="button" class="st-discuss" data-anno-status="discuss">Discuss</button></div>
+    <textarea class="anno-note" rows="2" placeholder="Add a note: why, who will fix it, a link..."></textarea>
+    <div class="anno-by muted"></div>
+  </div>
     <div class="f-meta">Major · <a href="#file-app-composables-useCart-ts" data-open-file="app/composables/useCart.ts">app/composables/useCart.ts:24</a> · Static check <code>js/foreach-async</code></div>
   </div>
-</details><details class="finding" id="F16" data-sev="major" data-cat="tests">
-  <summary><svg class="sev sev-major" width="14" height="14" viewBox="0 0 16 16" aria-label="Major" role="img"><polygon points="8,1.5 15,14.5 1,14.5"/></svg><span class="f-title">Focused test left in</span><span class="tag cat-tests">Tests</span><span class="loc">cart.test.ts:4</span></summary>
+</details><details class="finding" id="F16" data-sev="major" data-cat="tests" data-status="open">
+  <summary><svg class="sev sev-major" width="14" height="14" viewBox="0 0 16 16" aria-label="Major" role="img"><polygon points="8,1.5 15,14.5 1,14.5"/></svg><span class="f-title">Focused test left in</span><span class="anno-pill st-open"></span><span class="tag cat-tests">Tests</span><span class="loc">cart.test.ts:4</span></summary>
   <div class="f-body">
     <p>.only makes the runner skip every other test in the file, so CI can pass while tests are not run.</p>
     <div class="code"><div class="ln ln-ctx"><span class="no">2</span><span class="mk"> </span><span class="tx"> </span></div><div class="ln ln-ctx"><span class="no">3</span><span class="mk"> </span><span class="tx">describe(&#39;cart total&#39;, () =&gt; {</span></div><div class="ln ln-del"><span class="no">4</span><span class="mk">−</span><span class="tx">  it(&#39;adds prices&#39;, () =&gt; {</span></div><div class="ln ln-add ln-hit"><span class="no">4</span><span class="mk">+</span><span class="tx">  it.only(&#39;adds prices&#39;, () =&gt; {</span></div><div class="ln ln-ctx"><span class="no">5</span><span class="mk"> </span><span class="tx">    expect(1 + 1).toBe(2)</span></div><div class="ln ln-ctx"><span class="no">6</span><span class="mk"> </span><span class="tx">  })</span></div><div class="ln ln-ctx"><span class="no">7</span><span class="mk"> </span><span class="tx">})</span></div></div>
     <div class="fix"><div class="fix-label">Suggested change</div><div class="code"><div class="ln ln-del"><span class="mk">−</span><span class="tx">it.only(&#39;adds prices&#39;, () =&gt; {</span></div><div class="ln ln-add"><span class="mk">+</span><span class="tx">it(&#39;adds prices&#39;, () =&gt; {</span></div></div></div>
+    <div class="anno" data-anno="F16">
+    <div class="anno-st" role="group" aria-label="Status"><button type="button" class="st-open on" data-anno-status="open">Open</button><button type="button" class="st-agreed" data-anno-status="agreed">Agreed</button><button type="button" class="st-fixed" data-anno-status="fixed">Fixed</button><button type="button" class="st-wont-fix" data-anno-status="wont-fix">Won't fix</button><button type="button" class="st-discuss" data-anno-status="discuss">Discuss</button></div>
+    <textarea class="anno-note" rows="2" placeholder="Add a note: why, who will fix it, a link..."></textarea>
+    <div class="anno-by muted"></div>
+  </div>
     <div class="f-meta">Major · <a href="#file-test-cart-test-ts" data-open-file="test/cart.test.ts">test/cart.test.ts:4</a> · Static check <code>js/only-test</code></div>
   </div>
-</details><details class="finding" id="F3" data-sev="minor" data-cat="bug">
-  <summary><svg class="sev sev-minor" width="14" height="14" viewBox="0 0 16 16" aria-label="Minor" role="img"><circle cx="8" cy="8" r="6"/></svg><span class="f-title">v-for without a key</span><span class="tag cat-bug">Bug</span><span class="loc">CartSummary.vue:19</span></summary>
+</details><details class="finding" id="F3" data-sev="minor" data-cat="bug" data-status="open">
+  <summary><svg class="sev sev-minor" width="14" height="14" viewBox="0 0 16 16" aria-label="Minor" role="img"><circle cx="8" cy="8" r="6"/></svg><span class="f-title">v-for without a key</span><span class="anno-pill st-open"></span><span class="tag cat-bug">Bug</span><span class="loc">CartSummary.vue:19</span></summary>
   <div class="f-body">
     <p>Without a :key Vue reuses elements by position, so component state and inputs can end up on the wrong item when the list changes.</p>
     <div class="code"><div class="ln ln-ctx"><span class="no">17</span><span class="mk"> </span><span class="tx">    &lt;h2&gt;Your cart&lt;/h2&gt;</span></div><div class="ln ln-ctx"><span class="no">18</span><span class="mk"> </span><span class="tx">    &lt;ul&gt;</span></div><div class="ln ln-del"><span class="no">9</span><span class="mk">−</span><span class="tx">      &lt;li v-for=&quot;item in items&quot; :key=&quot;item.id&quot;&gt;{{ item.name }} × {{ item.qty }}&lt;/li&gt;</span></div><div class="ln ln-add ln-hit"><span class="no">19</span><span class="mk">+</span><span class="tx">      &lt;li v-for=&quot;item in items&quot;&gt;</span></div><div class="ln ln-add"><span class="no">20</span><span class="mk">+</span><span class="tx">        &lt;img :src=&quot;`/img/${item.id}.webp`&quot;&gt;</span></div><div class="ln ln-add"><span class="no">21</span><span class="mk">+</span><span class="tx">        {{ item.name }} × {{ item.qty }}</span></div><div class="ln ln-add"><span class="no">22</span><span class="mk">+</span><span class="tx">        &lt;span class=&quot;remove&quot; @click=&quot;remove(item.id)&quot;&gt;Remove&lt;/span&gt;</span></div></div>
     
+    <div class="anno" data-anno="F3">
+    <div class="anno-st" role="group" aria-label="Status"><button type="button" class="st-open on" data-anno-status="open">Open</button><button type="button" class="st-agreed" data-anno-status="agreed">Agreed</button><button type="button" class="st-fixed" data-anno-status="fixed">Fixed</button><button type="button" class="st-wont-fix" data-anno-status="wont-fix">Won't fix</button><button type="button" class="st-discuss" data-anno-status="discuss">Discuss</button></div>
+    <textarea class="anno-note" rows="2" placeholder="Add a note: why, who will fix it, a link..."></textarea>
+    <div class="anno-by muted"></div>
+  </div>
     <div class="f-meta">Minor · <a href="#file-app-components-CartSummary-vue" data-open-file="app/components/CartSummary.vue">app/components/CartSummary.vue:19</a> · Static check <code>vue/v-for-key</code></div>
   </div>
-</details><details class="finding" id="F5" data-sev="minor" data-cat="accessibility">
-  <summary><svg class="sev sev-minor" width="14" height="14" viewBox="0 0 16 16" aria-label="Minor" role="img"><circle cx="8" cy="8" r="6"/></svg><span class="f-title">Image without alt text</span><span class="tag cat-accessibility">Accessibility</span><span class="loc">CartSummary.vue:20</span></summary>
+</details><details class="finding" id="F5" data-sev="minor" data-cat="accessibility" data-status="open">
+  <summary><svg class="sev sev-minor" width="14" height="14" viewBox="0 0 16 16" aria-label="Minor" role="img"><circle cx="8" cy="8" r="6"/></svg><span class="f-title">Image without alt text</span><span class="anno-pill st-open"></span><span class="tag cat-accessibility">Accessibility</span><span class="loc">CartSummary.vue:20</span></summary>
   <div class="f-body">
     <p>Screen readers need alt text. Use alt=&quot;&quot; for decorative images.</p>
     <div class="code"><div class="ln ln-ctx"><span class="no">18</span><span class="mk"> </span><span class="tx">    &lt;ul&gt;</span></div><div class="ln ln-del"><span class="no">9</span><span class="mk">−</span><span class="tx">      &lt;li v-for=&quot;item in items&quot; :key=&quot;item.id&quot;&gt;{{ item.name }} × {{ item.qty }}&lt;/li&gt;</span></div><div class="ln ln-add"><span class="no">19</span><span class="mk">+</span><span class="tx">      &lt;li v-for=&quot;item in items&quot;&gt;</span></div><div class="ln ln-add ln-hit"><span class="no">20</span><span class="mk">+</span><span class="tx">        &lt;img :src=&quot;`/img/${item.id}.webp`&quot;&gt;</span></div><div class="ln ln-add"><span class="no">21</span><span class="mk">+</span><span class="tx">        {{ item.name }} × {{ item.qty }}</span></div><div class="ln ln-add"><span class="no">22</span><span class="mk">+</span><span class="tx">        &lt;span class=&quot;remove&quot; @click=&quot;remove(item.id)&quot;&gt;Remove&lt;/span&gt;</span></div><div class="ln ln-add"><span class="no">23</span><span class="mk">+</span><span class="tx">      &lt;/li&gt;</span></div></div>
     
+    <div class="anno" data-anno="F5">
+    <div class="anno-st" role="group" aria-label="Status"><button type="button" class="st-open on" data-anno-status="open">Open</button><button type="button" class="st-agreed" data-anno-status="agreed">Agreed</button><button type="button" class="st-fixed" data-anno-status="fixed">Fixed</button><button type="button" class="st-wont-fix" data-anno-status="wont-fix">Won't fix</button><button type="button" class="st-discuss" data-anno-status="discuss">Discuss</button></div>
+    <textarea class="anno-note" rows="2" placeholder="Add a note: why, who will fix it, a link..."></textarea>
+    <div class="anno-by muted"></div>
+  </div>
     <div class="f-meta">Minor · <a href="#file-app-components-CartSummary-vue" data-open-file="app/components/CartSummary.vue">app/components/CartSummary.vue:20</a> · Static check <code>vue/img-alt</code></div>
   </div>
-</details><details class="finding" id="F6" data-sev="minor" data-cat="accessibility">
-  <summary><svg class="sev sev-minor" width="14" height="14" viewBox="0 0 16 16" aria-label="Minor" role="img"><circle cx="8" cy="8" r="6"/></svg><span class="f-title">Click handler on a non-button</span><span class="tag cat-accessibility">Accessibility</span><span class="loc">CartSummary.vue:22</span></summary>
+</details><details class="finding" id="F6" data-sev="minor" data-cat="accessibility" data-status="open">
+  <summary><svg class="sev sev-minor" width="14" height="14" viewBox="0 0 16 16" aria-label="Minor" role="img"><circle cx="8" cy="8" r="6"/></svg><span class="f-title">Click handler on a non-button</span><span class="anno-pill st-open"></span><span class="tag cat-accessibility">Accessibility</span><span class="loc">CartSummary.vue:22</span></summary>
   <div class="f-body">
     <p>Keyboard users cannot reach or press this. Use a &lt;button&gt;, or add role=&quot;button&quot;, tabindex=&quot;0&quot; and a key handler.</p>
     <div class="code"><div class="ln ln-add"><span class="no">19</span><span class="mk">+</span><span class="tx">      &lt;li v-for=&quot;item in items&quot;&gt;</span></div><div class="ln ln-add"><span class="no">20</span><span class="mk">+</span><span class="tx">        &lt;img :src=&quot;`/img/${item.id}.webp`&quot;&gt;</span></div><div class="ln ln-add"><span class="no">21</span><span class="mk">+</span><span class="tx">        {{ item.name }} × {{ item.qty }}</span></div><div class="ln ln-add ln-hit"><span class="no">22</span><span class="mk">+</span><span class="tx">        &lt;span class=&quot;remove&quot; @click=&quot;remove(item.id)&quot;&gt;Remove&lt;/span&gt;</span></div><div class="ln ln-add"><span class="no">23</span><span class="mk">+</span><span class="tx">      &lt;/li&gt;</span></div><div class="ln ln-ctx"><span class="no">24</span><span class="mk"> </span><span class="tx">    &lt;/ul&gt;</span></div><div class="ln ln-ctx"><span class="no">25</span><span class="mk"> </span><span class="tx">    &lt;p&gt;Total: {{ total.toFixed(2) }}&lt;/p&gt;</span></div></div>
     
+    <div class="anno" data-anno="F6">
+    <div class="anno-st" role="group" aria-label="Status"><button type="button" class="st-open on" data-anno-status="open">Open</button><button type="button" class="st-agreed" data-anno-status="agreed">Agreed</button><button type="button" class="st-fixed" data-anno-status="fixed">Fixed</button><button type="button" class="st-wont-fix" data-anno-status="wont-fix">Won't fix</button><button type="button" class="st-discuss" data-anno-status="discuss">Discuss</button></div>
+    <textarea class="anno-note" rows="2" placeholder="Add a note: why, who will fix it, a link..."></textarea>
+    <div class="anno-by muted"></div>
+  </div>
     <div class="f-meta">Minor · <a href="#file-app-components-CartSummary-vue" data-open-file="app/components/CartSummary.vue">app/components/CartSummary.vue:22</a> · Static check <code>vue/click-on-div</code></div>
   </div>
-</details><details class="finding" id="F7" data-sev="minor" data-cat="bug">
-  <summary><svg class="sev sev-minor" width="14" height="14" viewBox="0 0 16 16" aria-label="Minor" role="img"><circle cx="8" cy="8" r="6"/></svg><span class="f-title">Loose equality</span><span class="tag cat-bug">Bug</span><span class="loc">useCart.ts:20</span></summary>
+</details><details class="finding" id="F7" data-sev="minor" data-cat="bug" data-status="open">
+  <summary><svg class="sev sev-minor" width="14" height="14" viewBox="0 0 16 16" aria-label="Minor" role="img"><circle cx="8" cy="8" r="6"/></svg><span class="f-title">Loose equality</span><span class="anno-pill st-open"></span><span class="tag cat-bug">Bug</span><span class="loc">useCart.ts:20</span></summary>
   <div class="f-body">
     <p>!= converts types before comparing, so 0 == &#39;&#39; is true. Use !== unless the conversion is wanted.</p>
     <div class="code"><div class="ln ln-ctx"><span class="no">18</span><span class="mk"> </span><span class="tx"> </span></div><div class="ln ln-del"><span class="no">18</span><span class="mk">−</span><span class="tx">  return { items, total, add }</span></div><div class="ln ln-add"><span class="no">19</span><span class="mk">+</span><span class="tx">  function remove(id: string) {</span></div><div class="ln ln-add ln-hit"><span class="no">20</span><span class="mk">+</span><span class="tx">    items.value = items.value.filter(i =&gt; i.id != id)</span></div><div class="ln ln-add"><span class="no">21</span><span class="mk">+</span><span class="tx">  }</span></div><div class="ln ln-add"><span class="no">22</span><span class="mk">+</span><span class="tx"> </span></div><div class="ln ln-add"><span class="no">23</span><span class="mk">+</span><span class="tx">  async function save() {</span></div></div>
     <div class="fix"><div class="fix-label">Suggested change</div><div class="code"><div class="ln ln-del"><span class="mk">−</span><span class="tx">items.value = items.value.filter(i =&gt; i.id != id)</span></div><div class="ln ln-add"><span class="mk">+</span><span class="tx">items.value = items.value.filter(i =&gt; i.id !== id)</span></div></div></div>
+    <div class="anno" data-anno="F7">
+    <div class="anno-st" role="group" aria-label="Status"><button type="button" class="st-open on" data-anno-status="open">Open</button><button type="button" class="st-agreed" data-anno-status="agreed">Agreed</button><button type="button" class="st-fixed" data-anno-status="fixed">Fixed</button><button type="button" class="st-wont-fix" data-anno-status="wont-fix">Won't fix</button><button type="button" class="st-discuss" data-anno-status="discuss">Discuss</button></div>
+    <textarea class="anno-note" rows="2" placeholder="Add a note: why, who will fix it, a link..."></textarea>
+    <div class="anno-by muted"></div>
+  </div>
     <div class="f-meta">Minor · <a href="#file-app-composables-useCart-ts" data-open-file="app/composables/useCart.ts">app/composables/useCart.ts:20</a> · Static check <code>js/loose-equality</code></div>
   </div>
-</details><details class="finding" id="F10" data-sev="minor" data-cat="bug">
-  <summary><svg class="sev sev-minor" width="14" height="14" viewBox="0 0 16 16" aria-label="Minor" role="img"><circle cx="8" cy="8" r="6"/></svg><span class="f-title">Browser-only API during server render</span><span class="tag cat-bug">Bug</span><span class="loc">useCart.ts:27</span></summary>
+</details><details class="finding" id="F10" data-sev="minor" data-cat="bug" data-status="open">
+  <summary><svg class="sev sev-minor" width="14" height="14" viewBox="0 0 16 16" aria-label="Minor" role="img"><circle cx="8" cy="8" r="6"/></svg><span class="f-title">Browser-only API during server render</span><span class="anno-pill st-open"></span><span class="tag cat-bug">Bug</span><span class="loc">useCart.ts:27</span></summary>
   <div class="f-body">
     <p>window, document and localStorage do not exist while the page renders on the server. Use them inside onMounted or behind import.meta.client.</p>
     <div class="code"><div class="ln ln-add"><span class="no">24</span><span class="mk">+</span><span class="tx">    items.value.forEach(async (item) =&gt; {</span></div><div class="ln ln-add"><span class="no">25</span><span class="mk">+</span><span class="tx">      await $fetch(&#39;/api/cart&#39;, { method: &#39;POST&#39;, body: item })</span></div><div class="ln ln-add"><span class="no">26</span><span class="mk">+</span><span class="tx">    })</span></div><div class="ln ln-add ln-hit"><span class="no">27</span><span class="mk">+</span><span class="tx">    localStorage.setItem(&#39;cart-saved-at&#39;, String(Date.now()))</span></div><div class="ln ln-add"><span class="no">28</span><span class="mk">+</span><span class="tx">  }</span></div><div class="ln ln-add"><span class="no">29</span><span class="mk">+</span><span class="tx"> </span></div><div class="ln ln-add"><span class="no">30</span><span class="mk">+</span><span class="tx">  async function applyCode(code: string) {</span></div></div>
     
+    <div class="anno" data-anno="F10">
+    <div class="anno-st" role="group" aria-label="Status"><button type="button" class="st-open on" data-anno-status="open">Open</button><button type="button" class="st-agreed" data-anno-status="agreed">Agreed</button><button type="button" class="st-fixed" data-anno-status="fixed">Fixed</button><button type="button" class="st-wont-fix" data-anno-status="wont-fix">Won't fix</button><button type="button" class="st-discuss" data-anno-status="discuss">Discuss</button></div>
+    <textarea class="anno-note" rows="2" placeholder="Add a note: why, who will fix it, a link..."></textarea>
+    <div class="anno-by muted"></div>
+  </div>
     <div class="f-meta">Minor · <a href="#file-app-composables-useCart-ts" data-open-file="app/composables/useCart.ts">app/composables/useCart.ts:27</a> · Static check <code>nuxt/browser-global</code></div>
   </div>
-</details><details class="finding" id="F9" data-sev="minor" data-cat="maintainability">
-  <summary><svg class="sev sev-minor" width="14" height="14" viewBox="0 0 16 16" aria-label="Minor" role="img"><circle cx="8" cy="8" r="6"/></svg><span class="f-title">Type set to any</span><span class="tag cat-maintainability">Maintainability</span><span class="loc">useCart.ts:31</span></summary>
+</details><details class="finding" id="F9" data-sev="minor" data-cat="maintainability" data-status="open">
+  <summary><svg class="sev sev-minor" width="14" height="14" viewBox="0 0 16 16" aria-label="Minor" role="img"><circle cx="8" cy="8" r="6"/></svg><span class="f-title">Type set to any</span><span class="anno-pill st-open"></span><span class="tag cat-maintainability">Maintainability</span><span class="loc">useCart.ts:31</span></summary>
   <div class="f-body">
     <p>any switches off type checking for this value and everything it touches. Use unknown and narrow it, or write the type.</p>
     <div class="code"><div class="ln ln-add"><span class="no">28</span><span class="mk">+</span><span class="tx">  }</span></div><div class="ln ln-add"><span class="no">29</span><span class="mk">+</span><span class="tx"> </span></div><div class="ln ln-add"><span class="no">30</span><span class="mk">+</span><span class="tx">  async function applyCode(code: string) {</span></div><div class="ln ln-add ln-hit"><span class="no">31</span><span class="mk">+</span><span class="tx">    const res: any = await $fetch(`/api/cart/discount?code=${code}`)</span></div><div class="ln ln-add"><span class="no">32</span><span class="mk">+</span><span class="tx">    discount.value = res.percent</span></div><div class="ln ln-add"><span class="no">33</span><span class="mk">+</span><span class="tx">  }</span></div><div class="ln ln-add"><span class="no">34</span><span class="mk">+</span><span class="tx"> </span></div></div>
     
+    <div class="anno" data-anno="F9">
+    <div class="anno-st" role="group" aria-label="Status"><button type="button" class="st-open on" data-anno-status="open">Open</button><button type="button" class="st-agreed" data-anno-status="agreed">Agreed</button><button type="button" class="st-fixed" data-anno-status="fixed">Fixed</button><button type="button" class="st-wont-fix" data-anno-status="wont-fix">Won't fix</button><button type="button" class="st-discuss" data-anno-status="discuss">Discuss</button></div>
+    <textarea class="anno-note" rows="2" placeholder="Add a note: why, who will fix it, a link..."></textarea>
+    <div class="anno-by muted"></div>
+  </div>
     <div class="f-meta">Minor · <a href="#file-app-composables-useCart-ts" data-open-file="app/composables/useCart.ts">app/composables/useCart.ts:31</a> · Static check <code>ts/any</code></div>
   </div>
-</details><details class="finding" id="F11" data-sev="minor" data-cat="security">
-  <summary><svg class="sev sev-minor" width="14" height="14" viewBox="0 0 16 16" aria-label="Minor" role="img"><circle cx="8" cy="8" r="6"/></svg><span class="f-title">Request body used without validation</span><span class="tag cat-security">Security</span><span class="loc">discount.get.ts:4</span></summary>
+</details><details class="finding" id="F11" data-sev="minor" data-cat="security" data-status="open">
+  <summary><svg class="sev sev-minor" width="14" height="14" viewBox="0 0 16 16" aria-label="Minor" role="img"><circle cx="8" cy="8" r="6"/></svg><span class="f-title">Request body used without validation</span><span class="anno-pill st-open"></span><span class="tag cat-security">Security</span><span class="loc">discount.get.ts:4</span></summary>
   <div class="f-body">
     <p>Anything can be sent to this route. readValidatedBody or getValidatedQuery with a schema (e.g. zod) rejects bad input before it is used.</p>
     <div class="code"><div class="ln ln-add"><span class="no">1</span><span class="mk">+</span><span class="tx">import { readFileSync } from &#39;node:fs&#39;</span></div><div class="ln ln-add"><span class="no">2</span><span class="mk">+</span><span class="tx"> </span></div><div class="ln ln-add"><span class="no">3</span><span class="mk">+</span><span class="tx">export default defineEventHandler(async (event) =&gt; {</span></div><div class="ln ln-add ln-hit"><span class="no">4</span><span class="mk">+</span><span class="tx">  const { code } = getQuery(event)</span></div><div class="ln ln-add"><span class="no">5</span><span class="mk">+</span><span class="tx">  const codes = JSON.parse(readFileSync(&#39;./data/discounts.json&#39;, &#39;utf8&#39;))</span></div><div class="ln ln-add"><span class="no">6</span><span class="mk">+</span><span class="tx">  const rows = await db.$queryRawUnsafe(`SELECT percent FROM discounts WHERE code = &#39;${code}&#39;`)</span></div><div class="ln ln-add"><span class="no">7</span><span class="mk">+</span><span class="tx">  return { percent: rows[0]?.percent ?? codes[code as string] ?? 0 }</span></div></div>
     
+    <div class="anno" data-anno="F11">
+    <div class="anno-st" role="group" aria-label="Status"><button type="button" class="st-open on" data-anno-status="open">Open</button><button type="button" class="st-agreed" data-anno-status="agreed">Agreed</button><button type="button" class="st-fixed" data-anno-status="fixed">Fixed</button><button type="button" class="st-wont-fix" data-anno-status="wont-fix">Won't fix</button><button type="button" class="st-discuss" data-anno-status="discuss">Discuss</button></div>
+    <textarea class="anno-note" rows="2" placeholder="Add a note: why, who will fix it, a link..."></textarea>
+    <div class="anno-by muted"></div>
+  </div>
     <div class="f-meta">Minor · <a href="#file-server-api-cart-discount-get-ts" data-open-file="server/api/cart/discount.get.ts">server/api/cart/discount.get.ts:4</a> · Static check <code>nuxt/unvalidated-body</code></div>
   </div>
-</details><details class="finding" id="F12" data-sev="minor" data-cat="performance">
-  <summary><svg class="sev sev-minor" width="14" height="14" viewBox="0 0 16 16" aria-label="Minor" role="img"><circle cx="8" cy="8" r="6"/></svg><span class="f-title">Blocking file read on the server</span><span class="tag cat-performance">Performance</span><span class="loc">discount.get.ts:5</span></summary>
+</details><details class="finding" id="F12" data-sev="minor" data-cat="performance" data-status="open">
+  <summary><svg class="sev sev-minor" width="14" height="14" viewBox="0 0 16 16" aria-label="Minor" role="img"><circle cx="8" cy="8" r="6"/></svg><span class="f-title">Blocking file read on the server</span><span class="anno-pill st-open"></span><span class="tag cat-performance">Performance</span><span class="loc">discount.get.ts:5</span></summary>
   <div class="f-body">
     <p>Sync file calls block every other request while they run. Use the fs/promises versions in request handlers.</p>
     <div class="code"><div class="ln ln-add"><span class="no">2</span><span class="mk">+</span><span class="tx"> </span></div><div class="ln ln-add"><span class="no">3</span><span class="mk">+</span><span class="tx">export default defineEventHandler(async (event) =&gt; {</span></div><div class="ln ln-add"><span class="no">4</span><span class="mk">+</span><span class="tx">  const { code } = getQuery(event)</span></div><div class="ln ln-add ln-hit"><span class="no">5</span><span class="mk">+</span><span class="tx">  const codes = JSON.parse(readFileSync(&#39;./data/discounts.json&#39;, &#39;utf8&#39;))</span></div><div class="ln ln-add"><span class="no">6</span><span class="mk">+</span><span class="tx">  const rows = await db.$queryRawUnsafe(`SELECT percent FROM discounts WHERE code = &#39;${code}&#39;`)</span></div><div class="ln ln-add"><span class="no">7</span><span class="mk">+</span><span class="tx">  return { percent: rows[0]?.percent ?? codes[code as string] ?? 0 }</span></div><div class="ln ln-add"><span class="no">8</span><span class="mk">+</span><span class="tx">})</span></div></div>
     
+    <div class="anno" data-anno="F12">
+    <div class="anno-st" role="group" aria-label="Status"><button type="button" class="st-open on" data-anno-status="open">Open</button><button type="button" class="st-agreed" data-anno-status="agreed">Agreed</button><button type="button" class="st-fixed" data-anno-status="fixed">Fixed</button><button type="button" class="st-wont-fix" data-anno-status="wont-fix">Won't fix</button><button type="button" class="st-discuss" data-anno-status="discuss">Discuss</button></div>
+    <textarea class="anno-note" rows="2" placeholder="Add a note: why, who will fix it, a link..."></textarea>
+    <div class="anno-by muted"></div>
+  </div>
     <div class="f-meta">Minor · <a href="#file-server-api-cart-discount-get-ts" data-open-file="server/api/cart/discount.get.ts">server/api/cart/discount.get.ts:5</a> · Static check <code>node/sync-fs</code></div>
   </div>
-</details><details class="finding" id="F15" data-sev="minor" data-cat="security">
-  <summary><svg class="sev sev-minor" width="14" height="14" viewBox="0 0 16 16" aria-label="Minor" role="img"><circle cx="8" cy="8" r="6"/></svg><span class="f-title">Request body used without validation</span><span class="tag cat-security">Security</span><span class="loc">index.post.ts:3</span></summary>
+</details><details class="finding" id="F15" data-sev="minor" data-cat="security" data-status="open">
+  <summary><svg class="sev sev-minor" width="14" height="14" viewBox="0 0 16 16" aria-label="Minor" role="img"><circle cx="8" cy="8" r="6"/></svg><span class="f-title">Request body used without validation</span><span class="anno-pill st-open"></span><span class="tag cat-security">Security</span><span class="loc">index.post.ts:3</span></summary>
   <div class="f-body">
     <p>Anything can be sent to this route. readValidatedBody or getValidatedQuery with a schema (e.g. zod) rejects bad input before it is used.</p>
     <div class="code"><div class="ln ln-add"><span class="no">1</span><span class="mk">+</span><span class="tx">export default defineEventHandler(async (event) =&gt; {</span></div><div class="ln ln-add"><span class="no">2</span><span class="mk">+</span><span class="tx">  const user = await requireUser(event)</span></div><div class="ln ln-add ln-hit"><span class="no">3</span><span class="mk">+</span><span class="tx">  const item = await readBody(event)</span></div><div class="ln ln-add"><span class="no">4</span><span class="mk">+</span><span class="tx">  console.log(&#39;saving cart item&#39;, item)</span></div><div class="ln ln-add"><span class="no">5</span><span class="mk">+</span><span class="tx">  return db.cart.upsert({</span></div><div class="ln ln-add"><span class="no">6</span><span class="mk">+</span><span class="tx">    where: { userId_itemId: { userId: user.id, itemId: item.id } },</span></div></div>
     
+    <div class="anno" data-anno="F15">
+    <div class="anno-st" role="group" aria-label="Status"><button type="button" class="st-open on" data-anno-status="open">Open</button><button type="button" class="st-agreed" data-anno-status="agreed">Agreed</button><button type="button" class="st-fixed" data-anno-status="fixed">Fixed</button><button type="button" class="st-wont-fix" data-anno-status="wont-fix">Won't fix</button><button type="button" class="st-discuss" data-anno-status="discuss">Discuss</button></div>
+    <textarea class="anno-note" rows="2" placeholder="Add a note: why, who will fix it, a link..."></textarea>
+    <div class="anno-by muted"></div>
+  </div>
     <div class="f-meta">Minor · <a href="#file-server-api-cart-index-post-ts" data-open-file="server/api/cart/index.post.ts">server/api/cart/index.post.ts:3</a> · Static check <code>nuxt/unvalidated-body</code></div>
   </div>
-</details><details class="finding" id="F14" data-sev="nit" data-cat="maintainability">
-  <summary><svg class="sev sev-nit" width="14" height="14" viewBox="0 0 16 16" aria-label="Nit" role="img"><circle cx="8" cy="8" r="3.5"/></svg><span class="f-title">console.log left in</span><span class="tag cat-maintainability">Maintainability</span><span class="loc">index.post.ts:4</span></summary>
+</details><details class="finding" id="F14" data-sev="nit" data-cat="maintainability" data-status="open">
+  <summary><svg class="sev sev-nit" width="14" height="14" viewBox="0 0 16 16" aria-label="Nit" role="img"><circle cx="8" cy="8" r="3.5"/></svg><span class="f-title">console.log left in</span><span class="anno-pill st-open"></span><span class="tag cat-maintainability">Maintainability</span><span class="loc">index.post.ts:4</span></summary>
   <div class="f-body">
     <p>Debug logging adds noise in production. Use the project logger or remove it.</p>
     <div class="code"><div class="ln ln-add"><span class="no">1</span><span class="mk">+</span><span class="tx">export default defineEventHandler(async (event) =&gt; {</span></div><div class="ln ln-add"><span class="no">2</span><span class="mk">+</span><span class="tx">  const user = await requireUser(event)</span></div><div class="ln ln-add"><span class="no">3</span><span class="mk">+</span><span class="tx">  const item = await readBody(event)</span></div><div class="ln ln-add ln-hit"><span class="no">4</span><span class="mk">+</span><span class="tx">  console.log(&#39;saving cart item&#39;, item)</span></div><div class="ln ln-add"><span class="no">5</span><span class="mk">+</span><span class="tx">  return db.cart.upsert({</span></div><div class="ln ln-add"><span class="no">6</span><span class="mk">+</span><span class="tx">    where: { userId_itemId: { userId: user.id, itemId: item.id } },</span></div><div class="ln ln-add"><span class="no">7</span><span class="mk">+</span><span class="tx">    create: { ...item, userId: user.id },</span></div></div>
     
+    <div class="anno" data-anno="F14">
+    <div class="anno-st" role="group" aria-label="Status"><button type="button" class="st-open on" data-anno-status="open">Open</button><button type="button" class="st-agreed" data-anno-status="agreed">Agreed</button><button type="button" class="st-fixed" data-anno-status="fixed">Fixed</button><button type="button" class="st-wont-fix" data-anno-status="wont-fix">Won't fix</button><button type="button" class="st-discuss" data-anno-status="discuss">Discuss</button></div>
+    <textarea class="anno-note" rows="2" placeholder="Add a note: why, who will fix it, a link..."></textarea>
+    <div class="anno-by muted"></div>
+  </div>
     <div class="f-meta">Nit · <a href="#file-server-api-cart-index-post-ts" data-open-file="server/api/cart/index.post.ts">server/api/cart/index.post.ts:4</a> · Static check <code>js/console</code></div>
   </div>
 </details></div></div>
@@ -1100,27 +1225,30 @@ footer{margin-top:48px}
       </summary>
       <div class="f-body">
         <p class="purpose">Handles discount code validation</p>
-        <div class="list nested"><details class="finding" id="F13" data-sev="blocker" data-cat="security">
-  <summary><svg class="sev sev-blocker" width="14" height="14" viewBox="0 0 16 16" aria-label="Blocker" role="img"><polygon points="5,1 11,1 15,5 15,11 11,15 5,15 1,11 1,5"/></svg><span class="f-title">SQL built from a string</span><span class="tag cat-security">Security</span><span class="loc">discount.get.ts:6</span></summary>
+        <div class="list nested"><details class="finding" id="F13" data-sev="blocker" data-cat="security" data-status="open">
+  <summary><svg class="sev sev-blocker" width="14" height="14" viewBox="0 0 16 16" aria-label="Blocker" role="img"><polygon points="5,1 11,1 15,5 15,11 11,15 5,15 1,11 1,5"/></svg><span class="f-title">SQL built from a string</span><span class="anno-pill st-open"></span><span class="tag cat-security">Security</span><span class="loc">discount.get.ts:6</span></summary>
   <div class="f-body">
     <p>Joining values into SQL allows SQL injection. Use parameters (?, $1) or a tagged sql`` helper.</p>
     <div class="code"><div class="ln ln-add"><span class="no">3</span><span class="mk">+</span><span class="tx">export default defineEventHandler(async (event) =&gt; {</span></div><div class="ln ln-add"><span class="no">4</span><span class="mk">+</span><span class="tx">  const { code } = getQuery(event)</span></div><div class="ln ln-add"><span class="no">5</span><span class="mk">+</span><span class="tx">  const codes = JSON.parse(readFileSync(&#39;./data/discounts.json&#39;, &#39;utf8&#39;))</span></div><div class="ln ln-add ln-hit"><span class="no">6</span><span class="mk">+</span><span class="tx">  const rows = await db.$queryRawUnsafe(`SELECT percent FROM discounts WHERE code = &#39;${code}&#39;`)</span></div><div class="ln ln-add"><span class="no">7</span><span class="mk">+</span><span class="tx">  return { percent: rows[0]?.percent ?? codes[code as string] ?? 0 }</span></div><div class="ln ln-add"><span class="no">8</span><span class="mk">+</span><span class="tx">})</span></div></div>
     
+    
     <div class="f-meta">Blocker · <a href="#file-server-api-cart-discount-get-ts" data-open-file="server/api/cart/discount.get.ts">server/api/cart/discount.get.ts:6</a> · Static check <code>node/sql-concat</code></div>
   </div>
-</details><details class="finding" id="F11" data-sev="minor" data-cat="security">
-  <summary><svg class="sev sev-minor" width="14" height="14" viewBox="0 0 16 16" aria-label="Minor" role="img"><circle cx="8" cy="8" r="6"/></svg><span class="f-title">Request body used without validation</span><span class="tag cat-security">Security</span><span class="loc">discount.get.ts:4</span></summary>
+</details><details class="finding" id="F11" data-sev="minor" data-cat="security" data-status="open">
+  <summary><svg class="sev sev-minor" width="14" height="14" viewBox="0 0 16 16" aria-label="Minor" role="img"><circle cx="8" cy="8" r="6"/></svg><span class="f-title">Request body used without validation</span><span class="anno-pill st-open"></span><span class="tag cat-security">Security</span><span class="loc">discount.get.ts:4</span></summary>
   <div class="f-body">
     <p>Anything can be sent to this route. readValidatedBody or getValidatedQuery with a schema (e.g. zod) rejects bad input before it is used.</p>
     <div class="code"><div class="ln ln-add"><span class="no">1</span><span class="mk">+</span><span class="tx">import { readFileSync } from &#39;node:fs&#39;</span></div><div class="ln ln-add"><span class="no">2</span><span class="mk">+</span><span class="tx"> </span></div><div class="ln ln-add"><span class="no">3</span><span class="mk">+</span><span class="tx">export default defineEventHandler(async (event) =&gt; {</span></div><div class="ln ln-add ln-hit"><span class="no">4</span><span class="mk">+</span><span class="tx">  const { code } = getQuery(event)</span></div><div class="ln ln-add"><span class="no">5</span><span class="mk">+</span><span class="tx">  const codes = JSON.parse(readFileSync(&#39;./data/discounts.json&#39;, &#39;utf8&#39;))</span></div><div class="ln ln-add"><span class="no">6</span><span class="mk">+</span><span class="tx">  const rows = await db.$queryRawUnsafe(`SELECT percent FROM discounts WHERE code = &#39;${code}&#39;`)</span></div><div class="ln ln-add"><span class="no">7</span><span class="mk">+</span><span class="tx">  return { percent: rows[0]?.percent ?? codes[code as string] ?? 0 }</span></div></div>
     
+    
     <div class="f-meta">Minor · <a href="#file-server-api-cart-discount-get-ts" data-open-file="server/api/cart/discount.get.ts">server/api/cart/discount.get.ts:4</a> · Static check <code>nuxt/unvalidated-body</code></div>
   </div>
-</details><details class="finding" id="F12" data-sev="minor" data-cat="performance">
-  <summary><svg class="sev sev-minor" width="14" height="14" viewBox="0 0 16 16" aria-label="Minor" role="img"><circle cx="8" cy="8" r="6"/></svg><span class="f-title">Blocking file read on the server</span><span class="tag cat-performance">Performance</span><span class="loc">discount.get.ts:5</span></summary>
+</details><details class="finding" id="F12" data-sev="minor" data-cat="performance" data-status="open">
+  <summary><svg class="sev sev-minor" width="14" height="14" viewBox="0 0 16 16" aria-label="Minor" role="img"><circle cx="8" cy="8" r="6"/></svg><span class="f-title">Blocking file read on the server</span><span class="anno-pill st-open"></span><span class="tag cat-performance">Performance</span><span class="loc">discount.get.ts:5</span></summary>
   <div class="f-body">
     <p>Sync file calls block every other request while they run. Use the fs/promises versions in request handlers.</p>
     <div class="code"><div class="ln ln-add"><span class="no">2</span><span class="mk">+</span><span class="tx"> </span></div><div class="ln ln-add"><span class="no">3</span><span class="mk">+</span><span class="tx">export default defineEventHandler(async (event) =&gt; {</span></div><div class="ln ln-add"><span class="no">4</span><span class="mk">+</span><span class="tx">  const { code } = getQuery(event)</span></div><div class="ln ln-add ln-hit"><span class="no">5</span><span class="mk">+</span><span class="tx">  const codes = JSON.parse(readFileSync(&#39;./data/discounts.json&#39;, &#39;utf8&#39;))</span></div><div class="ln ln-add"><span class="no">6</span><span class="mk">+</span><span class="tx">  const rows = await db.$queryRawUnsafe(`SELECT percent FROM discounts WHERE code = &#39;${code}&#39;`)</span></div><div class="ln ln-add"><span class="no">7</span><span class="mk">+</span><span class="tx">  return { percent: rows[0]?.percent ?? codes[code as string] ?? 0 }</span></div><div class="ln ln-add"><span class="no">8</span><span class="mk">+</span><span class="tx">})</span></div></div>
+    
     
     <div class="f-meta">Minor · <a href="#file-server-api-cart-discount-get-ts" data-open-file="server/api/cart/discount.get.ts">server/api/cart/discount.get.ts:5</a> · Static check <code>node/sync-fs</code></div>
   </div>
@@ -1138,43 +1266,48 @@ footer{margin-top:48px}
       </summary>
       <div class="f-body">
         <p class="purpose">Updates UI for cart interactions</p>
-        <div class="list nested"><details class="finding" id="F4" data-sev="major" data-cat="bug">
-  <summary><svg class="sev sev-major" width="14" height="14" viewBox="0 0 16 16" aria-label="Major" role="img"><polygon points="8,1.5 15,14.5 1,14.5"/></svg><span class="f-title">Prop changed in the child</span><span class="tag cat-bug">Bug</span><span class="loc">CartSummary.vue:11</span></summary>
+        <div class="list nested"><details class="finding" id="F4" data-sev="major" data-cat="bug" data-status="open">
+  <summary><svg class="sev sev-major" width="14" height="14" viewBox="0 0 16 16" aria-label="Major" role="img"><polygon points="8,1.5 15,14.5 1,14.5"/></svg><span class="f-title">Prop changed in the child</span><span class="anno-pill st-open"></span><span class="tag cat-bug">Bug</span><span class="loc">CartSummary.vue:11</span></summary>
   <div class="f-body">
     <p>Props belong to the parent. Changing one here is overwritten on the next render. Emit an event, or use defineModel.</p>
     <div class="code"><div class="ln ln-add"><span class="no">8</span><span class="mk">+</span><span class="tx">  saving.value = true</span></div><div class="ln ln-add"><span class="no">9</span><span class="mk">+</span><span class="tx">  await save()</span></div><div class="ln ln-add"><span class="no">10</span><span class="mk">+</span><span class="tx">  saving.value = false</span></div><div class="ln ln-add ln-hit"><span class="no">11</span><span class="mk">+</span><span class="tx">  props.note = &#39;Saved&#39;</span></div><div class="ln ln-add"><span class="no">12</span><span class="mk">+</span><span class="tx">}</span></div><div class="ln ln-ctx"><span class="no">13</span><span class="mk"> </span><span class="tx">&lt;/script&gt;</span></div><div class="ln ln-ctx"><span class="no">14</span><span class="mk"> </span><span class="tx"> </span></div></div>
     
+    
     <div class="f-meta">Major · <a href="#file-app-components-CartSummary-vue" data-open-file="app/components/CartSummary.vue">app/components/CartSummary.vue:11</a> · Static check <code>vue/mutate-prop</code></div>
   </div>
-</details><details class="finding" id="F2" data-sev="major" data-cat="security">
-  <summary><svg class="sev sev-major" width="14" height="14" viewBox="0 0 16 16" aria-label="Major" role="img"><polygon points="8,1.5 15,14.5 1,14.5"/></svg><span class="f-title">v-html renders raw HTML</span><span class="tag cat-security">Security</span><span class="loc">CartSummary.vue:27</span></summary>
+</details><details class="finding" id="F2" data-sev="major" data-cat="security" data-status="open">
+  <summary><svg class="sev sev-major" width="14" height="14" viewBox="0 0 16 16" aria-label="Major" role="img"><polygon points="8,1.5 15,14.5 1,14.5"/></svg><span class="f-title">v-html renders raw HTML</span><span class="anno-pill st-open"></span><span class="tag cat-security">Security</span><span class="loc">CartSummary.vue:27</span></summary>
   <div class="f-body">
     <p>v-html skips Vue&#39;s escaping, so any user content in it can run scripts. Render text, or sanitise the HTML (e.g. with DOMPurify) first.</p>
     <div class="code"><div class="ln ln-ctx"><span class="no">24</span><span class="mk"> </span><span class="tx">    &lt;/ul&gt;</span></div><div class="ln ln-ctx"><span class="no">25</span><span class="mk"> </span><span class="tx">    &lt;p&gt;Total: {{ total.toFixed(2) }}&lt;/p&gt;</span></div><div class="ln ln-add"><span class="no">26</span><span class="mk">+</span><span class="tx">    &lt;p v-if=&quot;discount&quot;&gt;After discount: {{ grandTotal.toFixed(2) }}&lt;/p&gt;</span></div><div class="ln ln-add ln-hit"><span class="no">27</span><span class="mk">+</span><span class="tx">    &lt;div v-html=&quot;note&quot; /&gt;</span></div><div class="ln ln-add"><span class="no">28</span><span class="mk">+</span><span class="tx">    &lt;input v-model=&quot;code&quot; placeholder=&quot;Discount code&quot;&gt;</span></div><div class="ln ln-add"><span class="no">29</span><span class="mk">+</span><span class="tx">    &lt;button @click=&quot;applyCode(code)&quot;&gt;Apply&lt;/button&gt;</span></div><div class="ln ln-add"><span class="no">30</span><span class="mk">+</span><span class="tx">    &lt;button :disabled=&quot;saving&quot; @click=&quot;onSave&quot;&gt;Save cart for later&lt;/button&gt;</span></div></div>
     
+    
     <div class="f-meta">Major · <a href="#file-app-components-CartSummary-vue" data-open-file="app/components/CartSummary.vue">app/components/CartSummary.vue:27</a> · Static check <code>vue/v-html</code></div>
   </div>
-</details><details class="finding" id="F3" data-sev="minor" data-cat="bug">
-  <summary><svg class="sev sev-minor" width="14" height="14" viewBox="0 0 16 16" aria-label="Minor" role="img"><circle cx="8" cy="8" r="6"/></svg><span class="f-title">v-for without a key</span><span class="tag cat-bug">Bug</span><span class="loc">CartSummary.vue:19</span></summary>
+</details><details class="finding" id="F3" data-sev="minor" data-cat="bug" data-status="open">
+  <summary><svg class="sev sev-minor" width="14" height="14" viewBox="0 0 16 16" aria-label="Minor" role="img"><circle cx="8" cy="8" r="6"/></svg><span class="f-title">v-for without a key</span><span class="anno-pill st-open"></span><span class="tag cat-bug">Bug</span><span class="loc">CartSummary.vue:19</span></summary>
   <div class="f-body">
     <p>Without a :key Vue reuses elements by position, so component state and inputs can end up on the wrong item when the list changes.</p>
     <div class="code"><div class="ln ln-ctx"><span class="no">17</span><span class="mk"> </span><span class="tx">    &lt;h2&gt;Your cart&lt;/h2&gt;</span></div><div class="ln ln-ctx"><span class="no">18</span><span class="mk"> </span><span class="tx">    &lt;ul&gt;</span></div><div class="ln ln-del"><span class="no">9</span><span class="mk">−</span><span class="tx">      &lt;li v-for=&quot;item in items&quot; :key=&quot;item.id&quot;&gt;{{ item.name }} × {{ item.qty }}&lt;/li&gt;</span></div><div class="ln ln-add ln-hit"><span class="no">19</span><span class="mk">+</span><span class="tx">      &lt;li v-for=&quot;item in items&quot;&gt;</span></div><div class="ln ln-add"><span class="no">20</span><span class="mk">+</span><span class="tx">        &lt;img :src=&quot;`/img/${item.id}.webp`&quot;&gt;</span></div><div class="ln ln-add"><span class="no">21</span><span class="mk">+</span><span class="tx">        {{ item.name }} × {{ item.qty }}</span></div><div class="ln ln-add"><span class="no">22</span><span class="mk">+</span><span class="tx">        &lt;span class=&quot;remove&quot; @click=&quot;remove(item.id)&quot;&gt;Remove&lt;/span&gt;</span></div></div>
     
+    
     <div class="f-meta">Minor · <a href="#file-app-components-CartSummary-vue" data-open-file="app/components/CartSummary.vue">app/components/CartSummary.vue:19</a> · Static check <code>vue/v-for-key</code></div>
   </div>
-</details><details class="finding" id="F5" data-sev="minor" data-cat="accessibility">
-  <summary><svg class="sev sev-minor" width="14" height="14" viewBox="0 0 16 16" aria-label="Minor" role="img"><circle cx="8" cy="8" r="6"/></svg><span class="f-title">Image without alt text</span><span class="tag cat-accessibility">Accessibility</span><span class="loc">CartSummary.vue:20</span></summary>
+</details><details class="finding" id="F5" data-sev="minor" data-cat="accessibility" data-status="open">
+  <summary><svg class="sev sev-minor" width="14" height="14" viewBox="0 0 16 16" aria-label="Minor" role="img"><circle cx="8" cy="8" r="6"/></svg><span class="f-title">Image without alt text</span><span class="anno-pill st-open"></span><span class="tag cat-accessibility">Accessibility</span><span class="loc">CartSummary.vue:20</span></summary>
   <div class="f-body">
     <p>Screen readers need alt text. Use alt=&quot;&quot; for decorative images.</p>
     <div class="code"><div class="ln ln-ctx"><span class="no">18</span><span class="mk"> </span><span class="tx">    &lt;ul&gt;</span></div><div class="ln ln-del"><span class="no">9</span><span class="mk">−</span><span class="tx">      &lt;li v-for=&quot;item in items&quot; :key=&quot;item.id&quot;&gt;{{ item.name }} × {{ item.qty }}&lt;/li&gt;</span></div><div class="ln ln-add"><span class="no">19</span><span class="mk">+</span><span class="tx">      &lt;li v-for=&quot;item in items&quot;&gt;</span></div><div class="ln ln-add ln-hit"><span class="no">20</span><span class="mk">+</span><span class="tx">        &lt;img :src=&quot;`/img/${item.id}.webp`&quot;&gt;</span></div><div class="ln ln-add"><span class="no">21</span><span class="mk">+</span><span class="tx">        {{ item.name }} × {{ item.qty }}</span></div><div class="ln ln-add"><span class="no">22</span><span class="mk">+</span><span class="tx">        &lt;span class=&quot;remove&quot; @click=&quot;remove(item.id)&quot;&gt;Remove&lt;/span&gt;</span></div><div class="ln ln-add"><span class="no">23</span><span class="mk">+</span><span class="tx">      &lt;/li&gt;</span></div></div>
     
+    
     <div class="f-meta">Minor · <a href="#file-app-components-CartSummary-vue" data-open-file="app/components/CartSummary.vue">app/components/CartSummary.vue:20</a> · Static check <code>vue/img-alt</code></div>
   </div>
-</details><details class="finding" id="F6" data-sev="minor" data-cat="accessibility">
-  <summary><svg class="sev sev-minor" width="14" height="14" viewBox="0 0 16 16" aria-label="Minor" role="img"><circle cx="8" cy="8" r="6"/></svg><span class="f-title">Click handler on a non-button</span><span class="tag cat-accessibility">Accessibility</span><span class="loc">CartSummary.vue:22</span></summary>
+</details><details class="finding" id="F6" data-sev="minor" data-cat="accessibility" data-status="open">
+  <summary><svg class="sev sev-minor" width="14" height="14" viewBox="0 0 16 16" aria-label="Minor" role="img"><circle cx="8" cy="8" r="6"/></svg><span class="f-title">Click handler on a non-button</span><span class="anno-pill st-open"></span><span class="tag cat-accessibility">Accessibility</span><span class="loc">CartSummary.vue:22</span></summary>
   <div class="f-body">
     <p>Keyboard users cannot reach or press this. Use a &lt;button&gt;, or add role=&quot;button&quot;, tabindex=&quot;0&quot; and a key handler.</p>
     <div class="code"><div class="ln ln-add"><span class="no">19</span><span class="mk">+</span><span class="tx">      &lt;li v-for=&quot;item in items&quot;&gt;</span></div><div class="ln ln-add"><span class="no">20</span><span class="mk">+</span><span class="tx">        &lt;img :src=&quot;`/img/${item.id}.webp`&quot;&gt;</span></div><div class="ln ln-add"><span class="no">21</span><span class="mk">+</span><span class="tx">        {{ item.name }} × {{ item.qty }}</span></div><div class="ln ln-add ln-hit"><span class="no">22</span><span class="mk">+</span><span class="tx">        &lt;span class=&quot;remove&quot; @click=&quot;remove(item.id)&quot;&gt;Remove&lt;/span&gt;</span></div><div class="ln ln-add"><span class="no">23</span><span class="mk">+</span><span class="tx">      &lt;/li&gt;</span></div><div class="ln ln-ctx"><span class="no">24</span><span class="mk"> </span><span class="tx">    &lt;/ul&gt;</span></div><div class="ln ln-ctx"><span class="no">25</span><span class="mk"> </span><span class="tx">    &lt;p&gt;Total: {{ total.toFixed(2) }}&lt;/p&gt;</span></div></div>
+    
     
     <div class="f-meta">Minor · <a href="#file-app-components-CartSummary-vue" data-open-file="app/components/CartSummary.vue">app/components/CartSummary.vue:22</a> · Static check <code>vue/click-on-div</code></div>
   </div>
@@ -1192,35 +1325,39 @@ footer{margin-top:48px}
       </summary>
       <div class="f-body">
         <p class="purpose">Adds cart management methods and state</p>
-        <div class="list nested"><details class="finding" id="F8" data-sev="major" data-cat="bug">
-  <summary><svg class="sev sev-major" width="14" height="14" viewBox="0 0 16 16" aria-label="Major" role="img"><polygon points="8,1.5 15,14.5 1,14.5"/></svg><span class="f-title">forEach with an async callback</span><span class="tag cat-bug">Bug</span><span class="loc">useCart.ts:24</span></summary>
+        <div class="list nested"><details class="finding" id="F8" data-sev="major" data-cat="bug" data-status="open">
+  <summary><svg class="sev sev-major" width="14" height="14" viewBox="0 0 16 16" aria-label="Major" role="img"><polygon points="8,1.5 15,14.5 1,14.5"/></svg><span class="f-title">forEach with an async callback</span><span class="anno-pill st-open"></span><span class="tag cat-bug">Bug</span><span class="loc">useCart.ts:24</span></summary>
   <div class="f-body">
     <p>forEach does not wait for async callbacks, so the code after it runs before they finish and their errors are lost. Use for...of with await, or Promise.all with map.</p>
     <div class="code"><div class="ln ln-add"><span class="no">21</span><span class="mk">+</span><span class="tx">  }</span></div><div class="ln ln-add"><span class="no">22</span><span class="mk">+</span><span class="tx"> </span></div><div class="ln ln-add"><span class="no">23</span><span class="mk">+</span><span class="tx">  async function save() {</span></div><div class="ln ln-add ln-hit"><span class="no">24</span><span class="mk">+</span><span class="tx">    items.value.forEach(async (item) =&gt; {</span></div><div class="ln ln-add"><span class="no">25</span><span class="mk">+</span><span class="tx">      await $fetch(&#39;/api/cart&#39;, { method: &#39;POST&#39;, body: item })</span></div><div class="ln ln-add"><span class="no">26</span><span class="mk">+</span><span class="tx">    })</span></div><div class="ln ln-add"><span class="no">27</span><span class="mk">+</span><span class="tx">    localStorage.setItem(&#39;cart-saved-at&#39;, String(Date.now()))</span></div></div>
     <div class="fix"><div class="fix-label">Suggested change</div><div class="code"><div class="ln ln-del"><span class="mk">−</span><span class="tx">items.value.forEach(async (item) =&gt; {</span></div><div class="ln ln-add"><span class="mk">+</span><span class="tx">await Promise.all(items.value.map(async (item) =&gt; {</span></div></div></div>
+    
     <div class="f-meta">Major · <a href="#file-app-composables-useCart-ts" data-open-file="app/composables/useCart.ts">app/composables/useCart.ts:24</a> · Static check <code>js/foreach-async</code></div>
   </div>
-</details><details class="finding" id="F7" data-sev="minor" data-cat="bug">
-  <summary><svg class="sev sev-minor" width="14" height="14" viewBox="0 0 16 16" aria-label="Minor" role="img"><circle cx="8" cy="8" r="6"/></svg><span class="f-title">Loose equality</span><span class="tag cat-bug">Bug</span><span class="loc">useCart.ts:20</span></summary>
+</details><details class="finding" id="F7" data-sev="minor" data-cat="bug" data-status="open">
+  <summary><svg class="sev sev-minor" width="14" height="14" viewBox="0 0 16 16" aria-label="Minor" role="img"><circle cx="8" cy="8" r="6"/></svg><span class="f-title">Loose equality</span><span class="anno-pill st-open"></span><span class="tag cat-bug">Bug</span><span class="loc">useCart.ts:20</span></summary>
   <div class="f-body">
     <p>!= converts types before comparing, so 0 == &#39;&#39; is true. Use !== unless the conversion is wanted.</p>
     <div class="code"><div class="ln ln-ctx"><span class="no">18</span><span class="mk"> </span><span class="tx"> </span></div><div class="ln ln-del"><span class="no">18</span><span class="mk">−</span><span class="tx">  return { items, total, add }</span></div><div class="ln ln-add"><span class="no">19</span><span class="mk">+</span><span class="tx">  function remove(id: string) {</span></div><div class="ln ln-add ln-hit"><span class="no">20</span><span class="mk">+</span><span class="tx">    items.value = items.value.filter(i =&gt; i.id != id)</span></div><div class="ln ln-add"><span class="no">21</span><span class="mk">+</span><span class="tx">  }</span></div><div class="ln ln-add"><span class="no">22</span><span class="mk">+</span><span class="tx"> </span></div><div class="ln ln-add"><span class="no">23</span><span class="mk">+</span><span class="tx">  async function save() {</span></div></div>
     <div class="fix"><div class="fix-label">Suggested change</div><div class="code"><div class="ln ln-del"><span class="mk">−</span><span class="tx">items.value = items.value.filter(i =&gt; i.id != id)</span></div><div class="ln ln-add"><span class="mk">+</span><span class="tx">items.value = items.value.filter(i =&gt; i.id !== id)</span></div></div></div>
+    
     <div class="f-meta">Minor · <a href="#file-app-composables-useCart-ts" data-open-file="app/composables/useCart.ts">app/composables/useCart.ts:20</a> · Static check <code>js/loose-equality</code></div>
   </div>
-</details><details class="finding" id="F10" data-sev="minor" data-cat="bug">
-  <summary><svg class="sev sev-minor" width="14" height="14" viewBox="0 0 16 16" aria-label="Minor" role="img"><circle cx="8" cy="8" r="6"/></svg><span class="f-title">Browser-only API during server render</span><span class="tag cat-bug">Bug</span><span class="loc">useCart.ts:27</span></summary>
+</details><details class="finding" id="F10" data-sev="minor" data-cat="bug" data-status="open">
+  <summary><svg class="sev sev-minor" width="14" height="14" viewBox="0 0 16 16" aria-label="Minor" role="img"><circle cx="8" cy="8" r="6"/></svg><span class="f-title">Browser-only API during server render</span><span class="anno-pill st-open"></span><span class="tag cat-bug">Bug</span><span class="loc">useCart.ts:27</span></summary>
   <div class="f-body">
     <p>window, document and localStorage do not exist while the page renders on the server. Use them inside onMounted or behind import.meta.client.</p>
     <div class="code"><div class="ln ln-add"><span class="no">24</span><span class="mk">+</span><span class="tx">    items.value.forEach(async (item) =&gt; {</span></div><div class="ln ln-add"><span class="no">25</span><span class="mk">+</span><span class="tx">      await $fetch(&#39;/api/cart&#39;, { method: &#39;POST&#39;, body: item })</span></div><div class="ln ln-add"><span class="no">26</span><span class="mk">+</span><span class="tx">    })</span></div><div class="ln ln-add ln-hit"><span class="no">27</span><span class="mk">+</span><span class="tx">    localStorage.setItem(&#39;cart-saved-at&#39;, String(Date.now()))</span></div><div class="ln ln-add"><span class="no">28</span><span class="mk">+</span><span class="tx">  }</span></div><div class="ln ln-add"><span class="no">29</span><span class="mk">+</span><span class="tx"> </span></div><div class="ln ln-add"><span class="no">30</span><span class="mk">+</span><span class="tx">  async function applyCode(code: string) {</span></div></div>
     
+    
     <div class="f-meta">Minor · <a href="#file-app-composables-useCart-ts" data-open-file="app/composables/useCart.ts">app/composables/useCart.ts:27</a> · Static check <code>nuxt/browser-global</code></div>
   </div>
-</details><details class="finding" id="F9" data-sev="minor" data-cat="maintainability">
-  <summary><svg class="sev sev-minor" width="14" height="14" viewBox="0 0 16 16" aria-label="Minor" role="img"><circle cx="8" cy="8" r="6"/></svg><span class="f-title">Type set to any</span><span class="tag cat-maintainability">Maintainability</span><span class="loc">useCart.ts:31</span></summary>
+</details><details class="finding" id="F9" data-sev="minor" data-cat="maintainability" data-status="open">
+  <summary><svg class="sev sev-minor" width="14" height="14" viewBox="0 0 16 16" aria-label="Minor" role="img"><circle cx="8" cy="8" r="6"/></svg><span class="f-title">Type set to any</span><span class="anno-pill st-open"></span><span class="tag cat-maintainability">Maintainability</span><span class="loc">useCart.ts:31</span></summary>
   <div class="f-body">
     <p>any switches off type checking for this value and everything it touches. Use unknown and narrow it, or write the type.</p>
     <div class="code"><div class="ln ln-add"><span class="no">28</span><span class="mk">+</span><span class="tx">  }</span></div><div class="ln ln-add"><span class="no">29</span><span class="mk">+</span><span class="tx"> </span></div><div class="ln ln-add"><span class="no">30</span><span class="mk">+</span><span class="tx">  async function applyCode(code: string) {</span></div><div class="ln ln-add ln-hit"><span class="no">31</span><span class="mk">+</span><span class="tx">    const res: any = await $fetch(`/api/cart/discount?code=${code}`)</span></div><div class="ln ln-add"><span class="no">32</span><span class="mk">+</span><span class="tx">    discount.value = res.percent</span></div><div class="ln ln-add"><span class="no">33</span><span class="mk">+</span><span class="tx">  }</span></div><div class="ln ln-add"><span class="no">34</span><span class="mk">+</span><span class="tx"> </span></div></div>
+    
     
     <div class="f-meta">Minor · <a href="#file-app-composables-useCart-ts" data-open-file="app/composables/useCart.ts">app/composables/useCart.ts:31</a> · Static check <code>ts/any</code></div>
   </div>
@@ -1238,11 +1375,12 @@ footer{margin-top:48px}
       </summary>
       <div class="f-body">
         <p class="purpose">Configures agent permissions and hooks</p>
-        <div class="list nested"><details class="finding" id="F1" data-sev="major" data-cat="security">
-  <summary><svg class="sev sev-major" width="14" height="14" viewBox="0 0 16 16" aria-label="Major" role="img"><polygon points="8,1.5 15,14.5 1,14.5"/></svg><span class="f-title">Agent may run any shell command</span><span class="tag cat-security">Security</span><span class="loc">settings.json:3</span></summary>
+        <div class="list nested"><details class="finding" id="F1" data-sev="major" data-cat="security" data-status="open">
+  <summary><svg class="sev sev-major" width="14" height="14" viewBox="0 0 16 16" aria-label="Major" role="img"><polygon points="8,1.5 15,14.5 1,14.5"/></svg><span class="f-title">Agent may run any shell command</span><span class="anno-pill st-open"></span><span class="tag cat-security">Security</span><span class="loc">settings.json:3</span></summary>
   <div class="f-body">
     <p>This allows every shell command without asking, including ones that delete files or send data out. Allow the specific commands the work needs instead, such as &quot;Bash(yarn test)&quot;.</p>
     <div class="code"><div class="ln ln-add"><span class="no">1</span><span class="mk">+</span><span class="tx">{</span></div><div class="ln ln-add"><span class="no">2</span><span class="mk">+</span><span class="tx">  &quot;permissions&quot;: {</span></div><div class="ln ln-add ln-hit"><span class="no">3</span><span class="mk">+</span><span class="tx">    &quot;allow&quot;: [&quot;Bash(yarn *)&quot;, &quot;Bash(*)&quot;]</span></div><div class="ln ln-add"><span class="no">4</span><span class="mk">+</span><span class="tx">  },</span></div><div class="ln ln-add"><span class="no">5</span><span class="mk">+</span><span class="tx">  &quot;hooks&quot;: {</span></div><div class="ln ln-add"><span class="no">6</span><span class="mk">+</span><span class="tx">    &quot;PostToolUse&quot;: [{ &quot;matcher&quot;: &quot;Edit&quot;, &quot;hooks&quot;: [{ &quot;type&quot;: &quot;command&quot;, &quot;command&quot;: &quot;yarn lint --fix&quot; }] }]</span></div></div>
+    
     
     <div class="f-meta">Major · <a href="#file--claude-settings-json" data-open-file=".claude/settings.json">.claude/settings.json:3</a> · Static check <code>agents/any-shell</code></div>
   </div>
@@ -1260,19 +1398,21 @@ footer{margin-top:48px}
       </summary>
       <div class="f-body">
         <p class="purpose">Handles cart item persistence</p>
-        <div class="list nested"><details class="finding" id="F15" data-sev="minor" data-cat="security">
-  <summary><svg class="sev sev-minor" width="14" height="14" viewBox="0 0 16 16" aria-label="Minor" role="img"><circle cx="8" cy="8" r="6"/></svg><span class="f-title">Request body used without validation</span><span class="tag cat-security">Security</span><span class="loc">index.post.ts:3</span></summary>
+        <div class="list nested"><details class="finding" id="F15" data-sev="minor" data-cat="security" data-status="open">
+  <summary><svg class="sev sev-minor" width="14" height="14" viewBox="0 0 16 16" aria-label="Minor" role="img"><circle cx="8" cy="8" r="6"/></svg><span class="f-title">Request body used without validation</span><span class="anno-pill st-open"></span><span class="tag cat-security">Security</span><span class="loc">index.post.ts:3</span></summary>
   <div class="f-body">
     <p>Anything can be sent to this route. readValidatedBody or getValidatedQuery with a schema (e.g. zod) rejects bad input before it is used.</p>
     <div class="code"><div class="ln ln-add"><span class="no">1</span><span class="mk">+</span><span class="tx">export default defineEventHandler(async (event) =&gt; {</span></div><div class="ln ln-add"><span class="no">2</span><span class="mk">+</span><span class="tx">  const user = await requireUser(event)</span></div><div class="ln ln-add ln-hit"><span class="no">3</span><span class="mk">+</span><span class="tx">  const item = await readBody(event)</span></div><div class="ln ln-add"><span class="no">4</span><span class="mk">+</span><span class="tx">  console.log(&#39;saving cart item&#39;, item)</span></div><div class="ln ln-add"><span class="no">5</span><span class="mk">+</span><span class="tx">  return db.cart.upsert({</span></div><div class="ln ln-add"><span class="no">6</span><span class="mk">+</span><span class="tx">    where: { userId_itemId: { userId: user.id, itemId: item.id } },</span></div></div>
     
+    
     <div class="f-meta">Minor · <a href="#file-server-api-cart-index-post-ts" data-open-file="server/api/cart/index.post.ts">server/api/cart/index.post.ts:3</a> · Static check <code>nuxt/unvalidated-body</code></div>
   </div>
-</details><details class="finding" id="F14" data-sev="nit" data-cat="maintainability">
-  <summary><svg class="sev sev-nit" width="14" height="14" viewBox="0 0 16 16" aria-label="Nit" role="img"><circle cx="8" cy="8" r="3.5"/></svg><span class="f-title">console.log left in</span><span class="tag cat-maintainability">Maintainability</span><span class="loc">index.post.ts:4</span></summary>
+</details><details class="finding" id="F14" data-sev="nit" data-cat="maintainability" data-status="open">
+  <summary><svg class="sev sev-nit" width="14" height="14" viewBox="0 0 16 16" aria-label="Nit" role="img"><circle cx="8" cy="8" r="3.5"/></svg><span class="f-title">console.log left in</span><span class="anno-pill st-open"></span><span class="tag cat-maintainability">Maintainability</span><span class="loc">index.post.ts:4</span></summary>
   <div class="f-body">
     <p>Debug logging adds noise in production. Use the project logger or remove it.</p>
     <div class="code"><div class="ln ln-add"><span class="no">1</span><span class="mk">+</span><span class="tx">export default defineEventHandler(async (event) =&gt; {</span></div><div class="ln ln-add"><span class="no">2</span><span class="mk">+</span><span class="tx">  const user = await requireUser(event)</span></div><div class="ln ln-add"><span class="no">3</span><span class="mk">+</span><span class="tx">  const item = await readBody(event)</span></div><div class="ln ln-add ln-hit"><span class="no">4</span><span class="mk">+</span><span class="tx">  console.log(&#39;saving cart item&#39;, item)</span></div><div class="ln ln-add"><span class="no">5</span><span class="mk">+</span><span class="tx">  return db.cart.upsert({</span></div><div class="ln ln-add"><span class="no">6</span><span class="mk">+</span><span class="tx">    where: { userId_itemId: { userId: user.id, itemId: item.id } },</span></div><div class="ln ln-add"><span class="no">7</span><span class="mk">+</span><span class="tx">    create: { ...item, userId: user.id },</span></div></div>
+    
     
     <div class="f-meta">Nit · <a href="#file-server-api-cart-index-post-ts" data-open-file="server/api/cart/index.post.ts">server/api/cart/index.post.ts:4</a> · Static check <code>js/console</code></div>
   </div>
@@ -1290,12 +1430,13 @@ footer{margin-top:48px}
       </summary>
       <div class="f-body">
         <p class="purpose">Updates test execution</p>
-        <div class="list nested"><details class="finding" id="F16" data-sev="major" data-cat="tests">
-  <summary><svg class="sev sev-major" width="14" height="14" viewBox="0 0 16 16" aria-label="Major" role="img"><polygon points="8,1.5 15,14.5 1,14.5"/></svg><span class="f-title">Focused test left in</span><span class="tag cat-tests">Tests</span><span class="loc">cart.test.ts:4</span></summary>
+        <div class="list nested"><details class="finding" id="F16" data-sev="major" data-cat="tests" data-status="open">
+  <summary><svg class="sev sev-major" width="14" height="14" viewBox="0 0 16 16" aria-label="Major" role="img"><polygon points="8,1.5 15,14.5 1,14.5"/></svg><span class="f-title">Focused test left in</span><span class="anno-pill st-open"></span><span class="tag cat-tests">Tests</span><span class="loc">cart.test.ts:4</span></summary>
   <div class="f-body">
     <p>.only makes the runner skip every other test in the file, so CI can pass while tests are not run.</p>
     <div class="code"><div class="ln ln-ctx"><span class="no">2</span><span class="mk"> </span><span class="tx"> </span></div><div class="ln ln-ctx"><span class="no">3</span><span class="mk"> </span><span class="tx">describe(&#39;cart total&#39;, () =&gt; {</span></div><div class="ln ln-del"><span class="no">4</span><span class="mk">−</span><span class="tx">  it(&#39;adds prices&#39;, () =&gt; {</span></div><div class="ln ln-add ln-hit"><span class="no">4</span><span class="mk">+</span><span class="tx">  it.only(&#39;adds prices&#39;, () =&gt; {</span></div><div class="ln ln-ctx"><span class="no">5</span><span class="mk"> </span><span class="tx">    expect(1 + 1).toBe(2)</span></div><div class="ln ln-ctx"><span class="no">6</span><span class="mk"> </span><span class="tx">  })</span></div><div class="ln ln-ctx"><span class="no">7</span><span class="mk"> </span><span class="tx">})</span></div></div>
     <div class="fix"><div class="fix-label">Suggested change</div><div class="code"><div class="ln ln-del"><span class="mk">−</span><span class="tx">it.only(&#39;adds prices&#39;, () =&gt; {</span></div><div class="ln ln-add"><span class="mk">+</span><span class="tx">it(&#39;adds prices&#39;, () =&gt; {</span></div></div></div>
+    
     <div class="f-meta">Major · <a href="#file-test-cart-test-ts" data-open-file="test/cart.test.ts">test/cart.test.ts:4</a> · Static check <code>js/only-test</code></div>
   </div>
 </details></div>
@@ -1371,10 +1512,88 @@ footer{margin-top:48px}
   }
   function filter(sev,cat){
     openTab('tab-findings');
-    $$('.filters .chip[data-filter-sev]').forEach(function(c){c.classList.toggle('on',c.dataset.filterSev===sev&&c.dataset.filterCat===cat)});
+    $$('.filters .chip[data-filter-sev]').forEach(function(c){c.classList.toggle('on',c.dataset.filterSev===sev&&c.dataset.filterCat===cat)});var td=$('[data-filter-todo]');if(td)td.classList.remove('on');
     $$('#findings-list>.finding').forEach(function(f){f.classList.toggle('hide',!!((sev&&f.dataset.sev!==sev)||(cat&&f.dataset.cat!==cat)))});
   }
+  /* Feedback on findings: status and note per finding, kept in this browser and exportable as JSON or Markdown. */
+  var fb=$('.feedback'),LABEL={open:'Open',agreed:'Agreed',fixed:'Fixed','wont-fix':"Won't fix",discuss:'Discuss'};
+  var KEY=fb?'scr-notes:'+fb.dataset.key:'';
+  function stored(){try{return JSON.parse(localStorage.getItem(KEY)||'{}')}catch(e){return{}}}
+  function current(){
+    var out={};$$('.anno').forEach(function(a){
+      var f=a.closest('.finding'),st=f.dataset.status,note=$('.anno-note',a).value.trim();
+      if(st!=='open'||note)out[a.dataset.anno]={findingId:a.dataset.anno,status:st,note:note||undefined,by:a.dataset.by||undefined,at:a.dataset.at||new Date().toISOString()};
+    });return out;
+  }
+  function save(){try{localStorage.setItem(KEY,JSON.stringify(current()))}catch(e){}}
+  function counts(){
+    if(!fb)return;var n={open:0,agreed:0,fixed:0,'wont-fix':0,discuss:0};
+    $$('#findings-list>.finding').forEach(function(f){n[f.dataset.status]++});
+    $$('.fb-c',fb).forEach(function(c){$('b',c).textContent=n[c.dataset.fb]});
+    var t=$('.todo-n');if(t)t.textContent=n.open+n.discuss;
+  }
+  function stamp(a){
+    var name=$('.fb-name').value.trim();a.dataset.by=name;a.dataset.at=new Date().toISOString();
+    $('.anno-by',a).textContent=(name?name+' · ':'')+a.dataset.at.slice(0,16).replace('T',' ');
+  }
+  function noteMark(f,has){
+    var h=$('.anno-has',f);
+    if(has&&!h){h=document.createElement('span');h.className='anno-has';h.title='Has a note';h.textContent='✎';$('summary',f).insertBefore(h,$('.tag',f))}
+    if(h)h.hidden=!has;
+  }
+  function setStatus(a,st,quiet){
+    var id=a.dataset.anno;
+    $$('[data-anno-status]',a).forEach(function(b){b.classList.toggle('on',b.dataset.annoStatus===st)});
+    /* The same finding also shows under its area and its file: keep every copy in step. */
+    $$('.finding').filter(function(f){return f.id===id}).forEach(function(f){
+      f.dataset.status=st;var p=$('.anno-pill',f);p.className='anno-pill st-'+st;p.textContent=st==='open'?'':LABEL[st];
+    });
+    if(!quiet){stamp(a);save()}counts();
+  }
+  function apply(list){
+    Object.keys(list).forEach(function(id){
+      var x=list[id],a=$$('.anno').filter(function(y){return y.dataset.anno===id})[0];if(!a)return;
+      $('.anno-note',a).value=x.note||'';a.dataset.by=x.by||'';a.dataset.at=x.at||'';
+      $('.anno-by',a).textContent=(x.by?x.by+' · ':'')+(x.at||'').slice(0,16).replace('T',' ');
+      noteMark(a.closest('.finding'),!!x.note);setStatus(a,x.status||'open',true);
+    });
+  }
+  function markdown(){
+    var NL=String.fromCharCode(10),lines=['# Review notes: '+fb.dataset.title,''];
+    $$('#findings-list>.finding').forEach(function(f){
+      var a=$('.anno',f),note=$('.anno-note',a).value.trim(),loc=$('summary .loc',f);
+      lines.push('- **'+LABEL[f.dataset.status]+'** · '+f.dataset.sev+' · '+$('.f-title',f).textContent+(loc?' ('+loc.textContent+')':'')+(note?NL+'  '+note.split(NL).join(NL+'  '):''));
+    });return lines.join(NL)+NL;
+  }
+  if(fb){
+    try{$('.fb-name').value=localStorage.getItem('scr-name')||''}catch(e){}
+    $('.fb-name').addEventListener('change',function(){try{localStorage.setItem('scr-name',this.value.trim())}catch(e){}});
+    $$('.anno').forEach(function(a){setStatus(a,a.closest('.finding').dataset.status,true)});
+    apply(stored());
+    $$('.anno-note').forEach(function(t){
+      t.addEventListener('change',function(){var a=t.closest('.anno');stamp(a);save();noteMark(a.closest('.finding'),!!t.value.trim())});
+    });
+    $('[data-fb-import]').addEventListener('change',function(){
+      var file=this.files[0];if(!file)return;file.text().then(function(t){
+        var j=JSON.parse(t),list={};(j.annotations||j).forEach(function(x){list[x.findingId]=x});apply(list);save();
+      });
+    });
+  }
   document.addEventListener('click',function(e){
+    var st=e.target.closest('[data-anno-status]');
+    if(st){setStatus(st.closest('.anno'),st.dataset.annoStatus);return}
+    if(e.target.closest('[data-fb-export]')){
+      var cur=current();
+      var blob=new Blob([JSON.stringify({review:fb.dataset.key,title:fb.dataset.title,annotations:Object.keys(cur).map(function(k){return cur[k]})},null,2)],{type:'application/json'});
+      var u=URL.createObjectURL(blob),l=document.createElement('a');l.href=u;l.download='review-notes.json';l.click();setTimeout(function(){URL.revokeObjectURL(u)},1000);return;
+    }
+    var cp=e.target.closest('[data-fb-copy]');
+    if(cp){navigator.clipboard.writeText(markdown()).then(function(){cp.textContent='Copied';setTimeout(function(){cp.textContent='Copy as Markdown'},1500)});return}
+    var td=e.target.closest('[data-filter-todo]');
+    if(td){
+      $$('.filters .chip[data-filter-sev],[data-filter-todo]').forEach(function(c){c.classList.toggle('on',c===td)});
+      $$('#findings-list>.finding').forEach(function(f){f.classList.toggle('hide',!(f.dataset.status==='open'||f.dataset.status==='discuss'))});return;
+    }
     var el=e.target.closest('[data-open-file],[data-open-cfile],[data-target],[data-open-tab],[data-filter-sev],[data-expand],[data-theme-toggle]');
     if(!el)return;
     if(el.hasAttribute('data-theme-toggle')){

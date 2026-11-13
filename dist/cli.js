@@ -16,6 +16,7 @@ import { fromGit } from "./sources/git.js";
 import { fromGitHubPr } from "./sources/github.js";
 import { parseContext } from "./connectors/index.js";
 import { providerFromEnv } from "./llm/providers.js";
+import { applyAnnotations, parseAnnotations } from "./annotations.js";
 import { review } from "./review.js";
 import { renderHtml } from "./report/html.js";
 import { SEVERITIES } from "./types.js";
@@ -39,6 +40,7 @@ Options
   --effort <level>       Claude effort: low, medium, high (default), xhigh, max
   --title <text>         Title for the report
   --body-file <file>     PR description, searched for linked work items
+  --annotations <file>   Notes exported from an earlier report, built into this one
   --url <url>            Link for the title
   --out <file>           HTML report path (default: reviews/<branch>.html)
   --json <file>          Also write the review as JSON
@@ -71,6 +73,7 @@ async function main() {
             model: { type: 'string' },
             title: { type: 'string' },
             'body-file': { type: 'string' },
+            annotations: { type: 'string' },
             url: { type: 'string' },
             out: { type: 'string' },
             json: { type: 'string' },
@@ -119,7 +122,7 @@ async function main() {
         log('No AI key found (ANTHROPIC_API_KEY, GEMINI_API_KEY or OPENAI_API_KEY), so only static checks will run.');
     // Optional module names, e.g. {"modules": [{"name": "Portal", "paths": ["apps/portal/"]}]}
     const config = existsSync('.smart-code-review.json') ? JSON.parse(readFileSync('.smart-code-review.json', 'utf8')) : {};
-    const result = await review(input, {
+    const raw = await review(input, {
         provider,
         modules: config.modules,
         plugins,
@@ -128,6 +131,7 @@ async function main() {
         instructions: instructionsFile ? readFileSync(instructionsFile, 'utf8') : undefined,
         onProgress: s => log(`· ${s}`)
     });
+    const result = a.annotations ? applyAnnotations(raw, parseAnnotations(readFileSync(a.annotations, 'utf8'))) : raw;
     const slug = (input.head ?? 'review').replace(/[^\w.-]+/g, '-');
     const out = resolve(a.out ?? `reviews/${slug}.html`);
     mkdirSync(dirname(out), { recursive: true });

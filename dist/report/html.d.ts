@@ -1,8 +1,9 @@
-import { type SymbolChange, type Review, type Severity } from '../types.ts';
+import { type SymbolChange, type Review, type Severity, type FeedbackStatus } from '../types.ts';
 /** A shape per severity, so it reads without colour too. */
 export declare function sevIcon(s: Severity, size?: number): string;
 /** Green to amber to red. */
 export declare function riskColor(r: number): string;
+export declare const FEEDBACK: Record<FeedbackStatus, string>;
 /** Added, changed, removed and renamed as a coloured shape, so the word isn't needed. */
 export declare function actIcon(a: SymbolChange['action'] | 'renamed', size?: number): string;
 /** The main path through the change, as a sequence diagram. */
