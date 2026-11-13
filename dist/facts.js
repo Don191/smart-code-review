@@ -260,13 +260,13 @@ export function agentLabel(p) {
     if (/(?:^|\/)\.claude\/hooks\//.test(p))
         return { label: `Hook: ${name}` };
     if (/(?:^|\/)\.claude\/settings(\.local)?\.json$/.test(p))
-        return { label: 'Settings: permissions and hooks', detail: name };
+        return { label: 'Settings: permissions and hooks' };
     if (/(?:^|\/)\.mcp\.json$/.test(p))
-        return { label: 'MCP servers', detail: name };
+        return { label: 'MCP servers' };
     if (/(?:^|\/)\.cursor\/rules\//.test(p))
         return { label: `Cursor rule: ${stem}` };
     if (/\.smart-code-review\./.test(p))
-        return { label: 'Review rules', detail: name };
+        return { label: 'Review rules' };
     if (/\.(md|mdc)$/i.test(name) || /rules$/.test(name))
         return { label: `Instructions: ${p.includes('/') && !p.startsWith('.') ? p : name}` };
     return { label: `Agent config: ${name}` };

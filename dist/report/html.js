@@ -365,22 +365,8 @@ function effortPips(n) {
 function outside(facts) {
     if (!facts.length)
         return '';
-    facts = facts.filter(f => f.kind !== 'agent');
-    if (!facts.length)
-        return '';
     const groups = Object.keys(FACT_GROUP).map(k => [k, facts.filter(f => f.kind === k)]).filter(([, l]) => l.length);
     return `<div class="panel"><h3>Outside the code</h3><div class="fact-groups">${groups.map(([k, l]) => `<div class="fact-group"><div class="fg-name">${FACT_GROUP[k]}</div>${l.map(f => factItem(f, true)).join('')}</div>`).join('')}</div></div>`;
-}
-/** Changes to how AI coding agents work in this repo: instructions, skills, subagents, commands, hooks. */
-function agentPanel(review) {
-    const facts = review.change.facts.filter(f => f.kind === 'agent');
-    if (!facts.length)
-        return '';
-    const byFile = new Map(review.files.map(f => [f.path, f]));
-    return `<section class="panel agents-panel"><h3>${kindIcon('agents')} AI agent setup</h3><p class="muted">Changes to the instructions, skills and tools that AI coding agents use in this repo.</p><div class="agent-list">${facts.map(f => {
-        const file = byFile.get(f.file);
-        return `<a class="agent-item" href="#c${fileId(f.file)}" data-open-cfile="${esc(f.file)}">${actIcon(f.action)}<span class="ag-main"><b>${esc(f.label)}</b>${file?.purpose ? `<span>${esc(file.purpose)}</span>` : ''}</span><span class="loc">${esc(f.file)}</span></a>`;
-    }).join('')}</div></section>`;
 }
 /** Part one: what the change does, stated as fact. */
 function changePart(review, diffByPath, add, del) {
@@ -397,7 +383,7 @@ function changePart(review, diffByPath, add, del) {
         count('route') ? `<span class="chip-f"><b>${count('route')}</b> API route${count('route') === 1 ? '' : 's'}</span>` : '',
         count('dependency') ? `<span class="chip-f"><b>${count('dependency')}</b> dependenc${count('dependency') === 1 ? 'y' : 'ies'}</span>` : '',
         count('env') ? `<span class="chip-f"><b>${count('env')}</b> env var${count('env') === 1 ? '' : 's'}</span>` : '',
-        count('agent') ? `<a class="chip-f" href="#agents" data-target="agents">${kindIcon('agents')}<b>${count('agent')}</b> AI agent change${count('agent') === 1 ? '' : 's'}</a>` : '',
+        count('agent') ? `<span class="chip-f"><b>${count('agent')}</b> AI agent change${count('agent') === 1 ? '' : 's'}</span>` : '',
         `<span class="chip-f">${effortPips(c.effort)}</span>`
     ].filter(Boolean).join('');
     const statusMap = treemap(review, {
@@ -410,9 +396,8 @@ function changePart(review, diffByPath, add, del) {
       <div class="facts">${chips}</div>
     </section>
     ${c.flow?.length ? `<div class="panel flow-panel"><h3>How it fits together</h3>${flowDiagram(c.flow)}</div>` : ''}
-    ${agentPanel(review).replace('<section class="panel agents-panel">', '<section class="panel agents-panel" id="agents">')}
     ${changeAreas(review, diffByPath)}
-    <section class="overview${c.facts.some(f => f.kind !== 'agent') ? '' : ' one'} later">
+    <section class="overview${c.facts.length ? '' : ' one'} later">
       <div class="panel"><h3>Files</h3>${statusMap}<div class="legend">${['added', 'changed', 'removed', 'renamed'].map(s => `<span><i class="sw" style="background:var(--s-${s})"></i>${s[0].toUpperCase()}${s.slice(1)}</span>`).join('')}<span class="muted">Size: lines changed</span></div></div>
       ${outside(c.facts)}
     </section>`;
