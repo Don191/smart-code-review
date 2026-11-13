@@ -19,6 +19,13 @@ export interface AgilityFinding {
     }[];
     fix?: string;
     agent: string;
+    /** What people said about it in the report: agreed, fixed, won't fix or discuss, with their note. */
+    feedback?: {
+        status: string;
+        note?: string;
+        by?: string;
+        at: string;
+    };
 }
 export interface AgilityReviewResult {
     agent: 'reviewer';

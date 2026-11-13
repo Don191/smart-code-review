@@ -269,3 +269,18 @@ test('Claude is the default provider at high effort', async () => {
   assert.ok(!/maxItems|minimum|maximum/.test(s))
   assert.ok(strictSchema(AI_SCHEMA).additionalProperties === false)
 })
+
+test('notes on findings carry into the report and the AGIlity result', async () => {
+  const { applyAnnotations, parseAnnotations, unresolvedFindings, renderHtml, toAgilityResult, review: run } = await import('../src/index.ts')
+  const r = await run({ diff }, { fetchContext: false })
+  assert.ok(r.findings.length)
+  const id = r.findings[0]!.id
+  const notes = parseAnnotations(JSON.stringify({ annotations: [{ findingId: id, status: 'wont-fix', note: 'Covered by the gateway', by: 'Donovan', at: '2026-11-13T01:00:00Z' }, { findingId: 'gone', status: 'agreed', at: 'x' }] }))
+  const withNotes = applyAnnotations(r, notes)
+  assert.equal(withNotes.annotations!.length, 1)
+  assert.equal(unresolvedFindings(withNotes).length, r.findings.length - 1)
+  const html = renderHtml(withNotes)
+  assert.match(html, /data-status="wont-fix"/)
+  assert.match(html, /Covered by the gateway/)
+  assert.equal(toAgilityResult(withNotes, { html: false }).findings[0]!.feedback?.status, 'wont-fix')
+})
