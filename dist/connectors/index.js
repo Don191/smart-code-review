@@ -51,6 +51,9 @@ export function parseContext(text, source = 'Provided') {
 }
 /** Finds references in the change and fetches them from every connector that is set up. */
 export async function gatherContext(input, opts) {
+    // AGIlity's lite mode hands work items in from its local board and makes no outside calls.
+    if (opts.env?.AGILITY_MODE === 'lite' || opts.env?.SMART_CODE_REVIEW_OFFLINE === '1')
+        return { items: [], connectors: [], warnings: [] };
     const have = new Set(opts.have ?? []);
     const text = [input.title, input.description, input.head, ...(input.commits ?? [])].filter(Boolean).join('\n');
     const items = [];

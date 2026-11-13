@@ -147,6 +147,25 @@ const html = renderHtml(result)
 
 The core uses `fetch` only, so it runs in Node, serverless functions and edge runtimes. `smart-code-review/node` adds `fromGit` for local repos. The review is also embedded in the report as JSON (`<script id="review-data">`), so other tools can read it back.
 
+## Part of AGIlity
+
+smart-code-review is the PR review step of AGIlity, a private multi-agent platform for the whole software lifecycle: shaping work, development, verification, performance, security, PR review, testing and penetration testing. The name blends agile and AGI. AGIlity isn't public yet, but smart-code-review is designed to fit into it and also works on its own.
+
+In AGIlity, the `reviewer` agent runs this package in the `pr-review` stage, alongside the performance and security agents:
+
+```ts
+import { review, toAgilityResult } from 'smart-code-review'
+
+const r = await review({ diff, head, base }, { provider, env, context })
+const result = toAgilityResult(r)
+// { agent: 'reviewer', verdict: 'pass' | 'warn' | 'fail', summary, findings, artifacts: [{ ref: 'review.html', html }], questions }
+```
+
+- Severities map to critical, high, medium and low (`SEVERITY_LEVEL`).
+- Finding ids are stable across runs of the same change, so a finding can be tracked from one review to the next.
+- Acceptance criteria that aren't clearly met become `questions` for the owner of the work item.
+- With `env.AGILITY_MODE = 'lite'`, or `offline: true`, nothing is fetched. Work items are passed in as `context`, and the model is whatever `provider` is passed in, or none for static checks only.
+
 ## GitHub Action
 
 ```yaml

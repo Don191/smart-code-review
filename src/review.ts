@@ -37,6 +37,8 @@ export interface ReviewOptions {
   context?: ContextItem[]
   /** Set false to skip fetching linked work items. */
   fetchContext?: boolean
+  /** Make no network calls: no work item fetching. A provider passed in is still used, so inject one that runs locally or leave it out. */
+  offline?: boolean
   /** House rules added to the prompt. */
   instructions?: string
   /** Name the high level modules yourself (portal, API...). Otherwise workspaces or layers are used. */
@@ -51,6 +53,24 @@ const SEVERITY_WEIGHT: Record<Severity, number> = { blocker: 45, major: 22, mino
 const GENERATED = /(^|\/)(dist|build|\.output|\.nuxt|coverage|vendor)\/|\.min\.(js|css)$|\.map$|\.snap$/
 
 const clamp = (n: number, lo = 0, hi = 100) => Math.max(lo, Math.min(hi, Math.round(n)))
+
+/**
+ * Ids that stay the same when the same change is reviewed again: built from
+ * the rule or category, file, line and title, so a tool can track a finding
+ * across runs.
+ */
+export function stableIds(list: Finding[]) {
+  const seen = new Map<string, number>()
+  for (const f of list) {
+    const key = [f.ruleId ?? f.category, f.file ?? '', f.line ?? '', f.title.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim()].join('|')
+    let h = 0x811c9dc5
+    for (let i = 0; i < key.length; i++) h = Math.imul(h ^ key.charCodeAt(i), 0x01000193)
+    const base = `scr-${(h >>> 0).toString(36)}`
+    const n = seen.get(base) ?? 0
+    seen.set(base, n + 1)
+    f.id = n ? `${base}-${n + 1}` : base
+  }
+}
 
 function sortFindings(list: Finding[]) {
   return list.sort((a, b) => SEVERITIES.indexOf(a.severity) - SEVERITIES.indexOf(b.severity) || (a.file ?? '').localeCompare(b.file ?? '') || (a.line ?? 0) - (b.line ?? 0))
@@ -154,7 +174,7 @@ export async function review(input: ChangeInput, opts: ReviewOptions = {}): Prom
   // Requirements and bugs.
   let context: ContextItem[] = [...(opts.context ?? [])]
   const connectors: string[] = context.length ? [...new Set(context.map(c => c.source))] : []
-  if (opts.fetchContext !== false) {
+  if (opts.fetchContext !== false && !opts.offline) {
     progress('Looking for linked requirements and bugs')
     const got = await gatherContext(input, { env: opts.env ?? {}, repo: input.repo, connectors: opts.connectors, have: context.map(c => c.id) })
     context = [...context, ...got.items]
@@ -208,6 +228,7 @@ export async function review(input: ChangeInput, opts: ReviewOptions = {}): Prom
     }
   }
   sortFindings(grouped)
+  stableIds(grouped)
 
   // File risk: size, how sensitive the file is, what was found, and the model's view.
   const aiFiles = new Map<string, { purpose?: string; risk?: number }>()

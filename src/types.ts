@@ -4,6 +4,9 @@ export type Severity = 'blocker' | 'major' | 'minor' | 'nit'
 
 export const SEVERITIES: Severity[] = ['blocker', 'major', 'minor', 'nit']
 
+/** The same severities on the common critical to low scale, for tools that use it. */
+export const SEVERITY_LEVEL: Record<Severity, 'critical' | 'high' | 'medium' | 'low'> = { blocker: 'critical', major: 'high', minor: 'medium', nit: 'low' }
+
 export type Category =
   | 'bug'
   | 'security'

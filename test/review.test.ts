@@ -12,6 +12,8 @@ import {
   githubIssues,
   lineRule,
   symbolChanges,
+  toAgilityResult,
+  gatherContext,
   changeFacts,
   flowDiagram,
   type LlmProvider,
@@ -237,4 +239,20 @@ new file mode 100644
   assert.deepEqual(r.change.facts.filter(f => f.kind === 'agent').map(f => f.label).sort(), ['Settings: permissions and hooks', 'Skill: deploy'])
   assert.ok(r.findings.some(f => f.ruleId === 'agents/any-shell'))
   assert.match(renderHtml(r), /AI agent setup/)
+})
+
+test('fits AGIlity: stable ids, severity scale, lite mode and the adapter', async () => {
+  const a = await review({ diff, title: 'Saved carts' }, { env: { AGILITY_MODE: 'lite' }, context })
+  const b = await review({ diff, title: 'Saved carts' }, { offline: true, context })
+  assert.deepEqual(a.findings.map(f => f.id), b.findings.map(f => f.id))
+  assert.ok(a.findings.every(f => /^scr-[a-z0-9]+(-\d+)?$/.test(f.id)))
+  assert.equal(new Set(a.findings.map(f => f.id)).size, a.findings.length)
+  const out = toAgilityResult(a)
+  assert.equal(out.agent, 'reviewer')
+  assert.ok(['pass', 'warn', 'fail'].includes(out.verdict))
+  assert.ok(out.findings.every(f => ['critical', 'high', 'medium', 'low'].includes(f.severity)))
+  assert.match(out.summary, /Risk \d+\/100\.$/)
+  assert.equal(out.artifacts[0]?.ref, 'review.html')
+  const got = await gatherContext({ diff, title: 'Fixes #12' }, { env: { AGILITY_MODE: 'lite' } })
+  assert.deepEqual(got.items, [])
 })
