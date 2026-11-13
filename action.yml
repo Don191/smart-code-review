@@ -5,10 +5,10 @@ branding:
   color: purple
 inputs:
   provider:
-    description: gemini, openai or none
-    default: gemini
+    description: claude, gemini, openai or none. Empty picks whichever key is set, Claude first.
+    default: ''
   model:
-    description: Model id. Defaults to gemini-3.1-flash-lite or gpt-5-mini.
+    description: Model id. Defaults to claude-opus-5-5, gemini-3.1-flash-lite or gpt-5-mini.
     default: ''
   fail-on:
     description: Fail the check if there's a finding this bad (blocker, major, minor). Empty never fails.
@@ -29,6 +29,8 @@ runs:
     - uses: actions/setup-node@v4
       with:
         node-version: 24
+    - shell: bash
+      run: cd "${{ github.action_path }}" && npm install --omit=dev --ignore-scripts --no-audit --no-fund
     - id: review
       shell: bash
       env:
@@ -44,9 +46,10 @@ runs:
       run: |
         set -euo pipefail
         printf '%s' "${PR_BODY:-}" > "$RUNNER_TEMP/pr-body.md"
-        args=(--base "origin/${BASE_REF:-main}" --provider "$INPUT_PROVIDER" --out "$RUNNER_TEMP/review/index.html" --json "$RUNNER_TEMP/review/review.json" --body-file "$RUNNER_TEMP/pr-body.md")
+        args=(--base "origin/${BASE_REF:-main}" --out "$RUNNER_TEMP/review/index.html" --json "$RUNNER_TEMP/review/review.json" --body-file "$RUNNER_TEMP/pr-body.md")
         [ -n "${PR_TITLE:-}" ] && args+=(--title "$PR_TITLE")
         [ -n "${PR_URL:-}" ] && args+=(--url "$PR_URL")
+        [ -n "$INPUT_PROVIDER" ] && args+=(--provider "$INPUT_PROVIDER")
         [ -n "$INPUT_MODEL" ] && args+=(--model "$INPUT_MODEL")
         [ -n "$INPUT_FAIL_ON" ] && args+=(--fail-on "$INPUT_FAIL_ON")
         [ -n "$INPUT_CONTEXT" ] && args+=(--context "$INPUT_CONTEXT")

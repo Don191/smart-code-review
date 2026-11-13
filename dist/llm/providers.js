@@ -1,4 +1,4 @@
-/** Minimal LLM clients over fetch, so the package runs in Node, edge runtimes and serverless functions alike. */
+/** LLM clients. Claude uses the official Anthropic SDK; the others are small fetch clients, so the package runs in Node, edge runtimes and serverless functions alike. */
 async function failText(res) {
     const body = await res.text().catch(() => '');
     try {
@@ -91,6 +91,57 @@ export function openai(opts) {
         }
     };
 }
+/** Strips schema keywords that structured outputs don't take, and closes every object. */
+export function strictSchema(schema) {
+    if (Array.isArray(schema))
+        return schema.map(strictSchema);
+    if (!schema || typeof schema !== 'object')
+        return schema;
+    const out = {};
+    for (const [k, v] of Object.entries(schema)) {
+        if (['minimum', 'maximum', 'exclusiveMinimum', 'exclusiveMaximum', 'multipleOf', 'minLength', 'maxLength', 'maxItems', 'minItems', 'uniqueItems'].includes(k))
+            continue;
+        out[k] = k === 'properties' ? Object.fromEntries(Object.entries(v).map(([n, d]) => [n, strictSchema(d)])) : strictSchema(v);
+    }
+    if (out.type === 'object')
+        out.additionalProperties = false;
+    return out;
+}
+/** Claude through the Anthropic API. Defaults to Opus 5.5 at high effort. */
+export function claude(opts = {}) {
+    const model = opts.model ?? 'claude-opus-5-5';
+    const effort = opts.effort ?? 'high';
+    let client;
+    // Loaded on first use, so the other providers work without the SDK installed.
+    const getClient = async () => (client ??= new (await import('@anthropic-ai/sdk')).default({ apiKey: opts.apiKey, baseURL: opts.baseUrl }));
+    return {
+        name: 'Claude',
+        model,
+        complete: async (req) => {
+            // Streams so a long review never hits the request timeout.
+            const stream = (await getClient()).beta.messages.stream({
+                model,
+                max_tokens: opts.maxTokens ?? 64000,
+                system: req.system,
+                messages: [{ role: 'user', content: req.prompt }],
+                thinking: { type: 'adaptive' },
+                output_config: { effort, format: { type: 'json_schema', schema: strictSchema(req.schema) } },
+                // If a safety check declines the request, the API reruns it on the recommended fallback model.
+                betas: ['server-side-fallback-2026-07-01'],
+                fallbacks: 'default'
+            }, { signal: req.signal });
+            const msg = await stream.finalMessage();
+            if (msg.stop_reason === 'refusal')
+                throw new Error(`Claude ${model} declined to review this change${msg.stop_details?.explanation ? `: ${msg.stop_details.explanation}` : ''}`);
+            const text = msg.content.map(b => (b.type === 'text' ? b.text : '')).join('');
+            if (!text)
+                throw new Error(`Claude ${model} returned no text (${msg.stop_reason})`);
+            if (msg.stop_reason === 'max_tokens')
+                throw new Error(`Claude ${model} ran out of output tokens before finishing the review`);
+            return text;
+        }
+    };
+}
 /** The OpenAI key under OPENAI_API_KEY, or any casing of OPENAPI_API_KEY. */
 export function openaiKeyFrom(env) {
     for (const [k, v] of Object.entries(env))
@@ -101,11 +152,16 @@ export function openaiKeyFrom(env) {
 export function geminiKeyFrom(env) {
     return env.GEMINI_API_KEY || env.GOOGLE_GENERATIVE_AI_API_KEY || env.GOOGLE_API_KEY || env.GOOGLE_VERTEX_API_KEY;
 }
-/** Picks a provider from env vars: `gemini` (default) or `openai`, or whichever has a key. */
+/** Picks a provider from env vars: `claude` (default), `gemini`, `openai` or `vertex`, or whichever has a key. */
 export function providerFromEnv(env, which, model) {
+    const a = env.ANTHROPIC_API_KEY;
     const g = geminiKeyFrom(env);
     const o = openaiKeyFrom(env);
-    const want = which ?? env.SMART_REVIEW_PROVIDER ?? (g ? 'gemini' : o ? 'openai' : undefined);
+    let want = which ?? env.SMART_REVIEW_PROVIDER ?? (a ? 'claude' : g ? 'gemini' : o ? 'openai' : undefined);
+    if (want === 'anthropic')
+        want = 'claude';
+    if (want === 'claude' && a)
+        return claude({ apiKey: a, model: model ?? env.SMART_REVIEW_MODEL, effort: env.SMART_REVIEW_EFFORT || undefined, baseUrl: env.ANTHROPIC_BASE_URL });
     if (want === 'gemini' && g)
         return gemini({ apiKey: g, model: model ?? env.SMART_REVIEW_MODEL });
     if (want === 'openai' && o)

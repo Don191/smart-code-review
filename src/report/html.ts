@@ -251,13 +251,13 @@ const FILE_STATUS: Record<DiffFile['status'], { label: string; cls: string }> = 
 }
 const SYM_KIND: Record<SymbolChange['kind'], string> = { function: 'Function', class: 'Class', method: 'Method', type: 'Type', template: 'Template', test: 'Test' }
 const FACT_GROUP: Record<ChangeFact['kind'], string> = {
+  env: 'Environment variables',
+  migration: 'Migrations',
   route: 'API routes',
   page: 'Pages',
   component: 'Components',
   dependency: 'Dependencies',
-  env: 'Environment variables',
   config: 'Config',
-  migration: 'Migrations',
   agent: 'AI agent setup'
 }
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`

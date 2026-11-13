@@ -26,5 +26,5 @@ export {
   type ContextRef,
   type ConnectorOptions
 } from './connectors/index.ts'
-export { gemini, vertex, openai, providerFromEnv, openaiKeyFrom, geminiKeyFrom, type LlmProvider } from './llm/providers.ts'
+export { claude, strictSchema, type Effort, gemini, vertex, openai, providerFromEnv, openaiKeyFrom, geminiKeyFrom, type LlmProvider } from './llm/providers.ts'
 export { fromGitHubPr, parsePrUrl } from './sources/github.ts'

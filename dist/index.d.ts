@@ -14,5 +14,5 @@ export { python } from './plugins/others.ts';
 export { agents } from './plugins/agents.ts';
 export { agentLabel, describeSymbol } from './facts.ts';
 export { gatherContext, parseContext, criteriaFrom, BUILT_IN_CONNECTORS, azureDevOps, notion, githubIssues, jira, type Connector, type ContextRef, type ConnectorOptions } from './connectors/index.ts';
-export { gemini, vertex, openai, providerFromEnv, openaiKeyFrom, geminiKeyFrom, type LlmProvider } from './llm/providers.ts';
+export { claude, strictSchema, type Effort, gemini, vertex, openai, providerFromEnv, openaiKeyFrom, geminiKeyFrom, type LlmProvider } from './llm/providers.ts';
 export { fromGitHubPr, parsePrUrl } from './sources/github.ts';
