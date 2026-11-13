@@ -313,7 +313,6 @@ function changeAreas(review: Review, diffByPath: Map<string, DiffFile>): string 
         <span class="m-size">${plural(files.length, 'file')}<br><span class="plus">+${m.additions}</span> <span class="minus">−${m.deletions}</span></span>
       </summary>
       <div class="m-body">
-        ${m.points?.length ? `<ul class="keys">${m.points.map(p => `<li>${esc(p)}</li>`).join('')}</ul>` : ''}
         <div class="list">${files.map(f => changeFile(f, diffByPath.get(f.path), m.root)).join('')}</div>
       </div>
     </details>`
@@ -396,7 +395,6 @@ function changePart(review: Review, diffByPath: Map<string, DiffFile>, add: numb
   })
   return `<section class="hero">
       <p class="c-sum">${esc(c.summary)}</p>
-      ${c.points.length ? `<ul class="keys">${c.points.map(p => `<li>${esc(p)}</li>`).join('')}</ul>` : ''}
       <div class="facts">${chips}</div>
     </section>
     ${c.flow?.length ? `<div class="panel flow-panel"><h3>How it fits together</h3>${flowDiagram(c.flow)}</div>` : ''}
@@ -516,7 +514,6 @@ export function renderHtml(review: Review, opts: RenderOptions = {}): string {
     <div class="v-text">
       <span class="pill">${v.label}</span>
       <p class="headline">${esc(review.headline)}</p>
-      ${review.summary.length ? `<ul class="keys">${review.summary.map(s => `<li>${esc(s)}</li>`).join('')}</ul>` : ''}
     </div>
   </section>
 

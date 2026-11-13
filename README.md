@@ -6,7 +6,7 @@ AI code review that writes a visual HTML report. The report has two parts, and e
 
 **The change** describes what the change does, without judgement.
 
-- **Summary first.** What the change does in one sentence, the main points, and counts: files, areas, functions added, changed and removed, API routes, dependencies, environment variables, and how long it will take to review.
+- **Summary first.** What the change does in one sentence, then counts: files, areas, functions added, changed and removed, API routes, dependencies, environment variables, and how long it will take to review.
 - **How it fits together.** A diagram of the main path through the change, from the UI to the API, for example.
 - **Areas changed.** One short section per module: each workspace in a monorepo (portal, api, ui...) or each layer (frontend, backend, shared, tests, config). Each opens to its files, each file to the functions, components and templates it changes, and each of those to its lines.
 - **Outside the code.** API routes, pages, dependencies, environment variables, config keys and migrations that were added, changed or removed.

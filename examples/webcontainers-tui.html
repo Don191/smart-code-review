@@ -350,7 +350,6 @@ footer{margin-top:32px;color:var(--muted);font-size:12px;text-align:center}
     <div class="part" data-part="part-change">
     <section class="hero">
       <p class="c-sum">Replaces the Ink-based TUI with a custom, dependency-free terminal UI that manages service lifecycles directly.</p>
-      <ul class="keys"><li>Removes Ink and React dependencies from the TUI.</li><li>Adds a ServiceManager to start and stop worker and dashboard processes.</li><li>Implements a custom ANSI-based rendering engine for terminal output.</li><li>Updates the TUI to manage service lifecycles and display logs.</li></ul>
       <div class="facts"><span class="chip-f"><b>9</b> files <span class="plus">+683</span> <span class="minus">−1430</span></span><span class="chip-f"><b>3</b> areas</span><span class="chip-f"><span class="act act-added">39 added</span><span class="act act-changed">2 changed</span><span class="act act-removed">11 removed</span> functions and types</span><span class="chip-f"><b>3</b> tests</span><span class="chip-f"><b>6</b> dependencies</span><span class="chip-f"><b>1</b> env var</span><span class="chip-f"><span class="pips" title="Review effort 5 of 5"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span><span>Very long to review</span></span></div>
     </section>
     <div class="panel flow-panel"><h3>How it fits together</h3><div class="flow-wrap"><svg class="flow" viewBox="0 0 1000 256" role="img" aria-label="How the parts of the change call each other">
@@ -371,7 +370,6 @@ footer{margin-top:32px;color:var(--muted);font-size:12px;text-align:center}
         <span class="m-size">6 files<br><span class="plus">+572</span> <span class="minus">−245</span></span>
       </summary>
       <div class="m-body">
-        <ul class="keys"><li>Removes all React and Ink dependencies.</li><li>Adds ServiceManager for process lifecycle control.</li><li>Adds custom screen rendering and ANSI utilities.</li></ul>
         <div class="list"><details class="cfile" id="cfile-apps-tui-src-services-js" data-path="apps/tui/src/services.js">
     <summary>
       <span class="st-badge st-added">Added</span>
@@ -625,7 +623,6 @@ footer{margin-top:32px;color:var(--muted);font-size:12px;text-align:center}
         <span class="m-size">2 files<br><span class="plus">+87</span> <span class="minus">−1174</span></span>
       </summary>
       <div class="m-body">
-        <ul class="keys"><li>Adds WebAssembly-based build tool resolutions.</li><li>Removes Ink and React from dependencies.</li><li>Adds start script for the TUI.</li></ul>
         <div class="list"><details class="cfile" id="cfile-package-json" data-path="package.json">
     <summary>
       <span class="st-badge st-changed">Changed</span>
@@ -662,7 +659,6 @@ footer{margin-top:32px;color:var(--muted);font-size:12px;text-align:center}
         <span class="m-size">1 file<br><span class="plus">+24</span> <span class="minus">−11</span></span>
       </summary>
       <div class="m-body">
-        
         <div class="list"><details class="cfile" id="cfile-README-md" data-path="README.md">
     <summary>
       <span class="st-badge st-changed">Changed</span>
@@ -711,7 +707,6 @@ footer{margin-top:32px;color:var(--muted);font-size:12px;text-align:center}
     <div class="v-text">
       <span class="pill">Looks good</span>
       <p class="headline">The TUI is now dependency-free and manages service lifecycles, which is ready for review.</p>
-      <ul class="keys"><li>Custom rendering logic replaces Ink, reducing complexity and improving compatibility.</li><li>Service management adds process control, which requires careful cleanup.</li><li>The new architecture is robust for WebContainer environments.</li></ul>
     </div>
   </section>
 
