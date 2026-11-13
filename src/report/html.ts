@@ -436,6 +436,74 @@ function changePart(review: Review, diffByPath: Map<string, DiffFile>, add: numb
     </section>`
 }
 
+/** Lines a reviewer can skip: lockfiles, generated files, binaries, docs, pure renames and whitespace-only edits. */
+export function routine(review: Review): { total: number; skip: number; reasons: { label: string; lines: number }[] } {
+  const byPath = new Map(review.files.map(f => [f.path, f]))
+  const reasons = new Map<string, number>()
+  let total = 0
+  let skip = 0
+  const add = (label: string, n: number) => { if (n) { reasons.set(label, (reasons.get(label) ?? 0) + n); skip += n } }
+  for (const d of review.diff) {
+    const f = byPath.get(d.path)
+    const n = d.additions + d.deletions
+    total += n
+    if (!f) continue
+    if (f.role === 'Lockfile') { add('lockfiles', n); continue }
+    if (f.role === 'Generated') { add('generated files', n); continue }
+    if (f.role === 'Binary') { add('binary files', n); continue }
+    if (f.module === 'Docs' || (f.role === 'Docs' && f.module !== 'AI agent setup')) { add('docs', n); continue }
+    if (d.status === 'renamed' && n === 0) { add('renames', 0); continue }
+    // Hunks whose removed and added lines differ only in whitespace.
+    let ws = 0
+    for (const h of d.hunks) {
+      const del = h.lines.filter(l => l.type === 'del').map(l => l.content.replace(/\s+/g, '')).sort()
+      const ins = h.lines.filter(l => l.type === 'add').map(l => l.content.replace(/\s+/g, '')).sort()
+      if (del.length && del.length === ins.length && del.every((c, i) => c === ins[i])) ws += del.length * 2
+    }
+    add('formatting', ws)
+  }
+  return { total, skip, reasons: [...reasons].map(([label, lines]) => ({ label, lines })).sort((a, b) => b.lines - a.lines) }
+}
+
+const CALL: Record<Review['verdict'], { verb: string; cls: string; icon: string }> = {
+  approve: { verb: 'Merge', cls: 'ok', icon: '<path d="M5 10.5l3.2 3.2L15 6.8"/>' },
+  comment: { verb: 'Check these first', cls: 'warn', icon: '<path d="M10 5.5v5.5M10 14.2v.3"/>' },
+  'request-changes': { verb: 'Send back', cls: 'bad', icon: '<path d="M6.5 6.5l7 7M13.5 6.5l-7 7"/>' }
+}
+
+/** The first thing on the page: what to do with this PR, how much of it to read, and where. */
+function decideCard(review: Review, diffByPath: Map<string, DiffFile>): string {
+  const c = CALL[review.verdict]
+  const r = routine(review)
+  const read = Math.max(0, r.total - r.skip)
+  const readPct = r.total ? Math.round((read / r.total) * 100) : 0
+  const sevRank = (f: Finding) => SEVERITIES.indexOf(f.severity)
+  const look = [...review.findings].filter(f => f.severity !== 'nit').sort((a, b) => sevRank(a) - sevRank(b)).slice(0, 3)
+  const more = review.findings.length - look.length
+  const first = (t: string) => (t.match(/^.+?[.!?](\s|$)/)?.[0] ?? t).trim()
+  const looks = look.map(f => {
+    const file = f.file ? diffByPath.get(f.file) : undefined
+    const ex = file && f.line ? excerpt(file, f.line, 2) : []
+    return `<li class="d-item">
+      <div class="d-ih">${sevIcon(f.severity, 16)}<b>${esc(f.title)}</b>${f.file ? `<a class="loc" href="#${f.id}" data-open-tab="tab-findings" data-target="${f.id}">${esc(base(f.file))}${f.line ? `:${f.line}` : ''}</a>` : ''}</div>
+      <p>${esc(first(f.detail))}</p>
+      ${ex.length ? diffLines(ex, f.line) : ''}
+    </li>`
+  }).join('')
+  const plural2 = (n: number, w: string) => `${n} ${w}${n === 1 ? '' : 's'}`
+  return `<section class="decide d-${c.cls}" aria-label="Decision">
+    <div class="d-top">
+      <div class="d-call"><svg class="d-icon" viewBox="0 0 20 20" width="40" height="40" aria-hidden="true"><circle cx="10" cy="10" r="9"/>${c.icon}</svg><div><div class="d-verb">${c.verb}</div><div class="d-sub">Risk ${review.risk} · ${look.length ? plural2(look.length, 'place') + ' to check' : 'nothing flagged'}</div></div></div>
+      <p class="d-head">${esc(review.headline)}</p>
+    </div>
+    <div class="d-read">
+      <div class="d-bar" role="img" aria-label="${readPct}% of changed lines need reading"><i class="need" style="width:${readPct}%"></i><i class="skip" style="width:${100 - readPct}%"></i></div>
+      <div class="d-legend"><span><i class="sw need"></i><b>${read}</b> line${read === 1 ? '' : 's'} to read</span>${r.skip ? `<span><i class="sw skip"></i><b>${r.skip}</b> routine: ${r.reasons.map(x => esc(x.label)).join(', ')}</span>` : ''}<span class="muted">${plural2(review.diff.length, 'file')}</span></div>
+    </div>
+    ${look.length ? `<ol class="d-list">${looks}</ol>${more > 0 ? `<a class="d-more" href="#tab-findings" data-open-tab="tab-findings">${plural2(more, 'more finding')} in Review</a>` : ''}` : ''}
+  </section>`
+}
+
 export interface RenderOptions {
   /** Include the review JSON in the page so tools can read it back. Default true. */
   embedData?: boolean
@@ -533,6 +601,7 @@ export function renderHtml(review: Review, opts: RenderOptions = {}): string {
     <button class="theme" type="button" aria-label="Switch light and dark" data-theme-toggle><svg width="16" height="16" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 1.5a6.5 6.5 0 0 1 0 13z" fill="currentColor"/></svg></button>
   </header>
 
+  ${decideCard(review, diffByPath)}
   <div class="parts">
     <input type="radio" name="part" id="part-change" checked><label for="part-change"><span class="p-t">The change</span><span class="p-s">What it does, area by area</span></label>
     <input type="radio" name="part" id="part-review"><label for="part-review" class="v-${v.cls}"><span class="p-t">Review <span class="pill">${v.label}</span></span><span class="p-s">Risk, issues and requirements</span></label>
@@ -540,14 +609,6 @@ export function renderHtml(review: Review, opts: RenderOptions = {}): string {
     ${changePart(review, diffByPath, add, del)}
     </div>
     <div class="part" data-part="part-review">
-  <section class="verdict v-${v.cls}" aria-label="Verdict">
-    <div class="g">${gauge(review.risk)}</div>
-    <div class="v-text">
-      <span class="pill">${v.label}</span>
-      <p class="headline">${esc(review.headline)}</p>
-    </div>
-  </section>
-
   ${signals}
   ${areas(review, diffByPath)}
 

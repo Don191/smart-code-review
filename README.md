@@ -1,8 +1,8 @@
 # smart-code-review
 
-AI code review that writes a visual HTML report. The report has two parts, and each opens on a short summary that you click through for more detail only where you need it.
+AI code review that writes a visual HTML report, built so a pull request can be decided in seconds. The report opens on the call (merge, check these first, or send back), how much of the diff is routine and can be skipped, and up to three places to check with their code shown. Below that are two parts you click into only where you need more.
 
-![The change part of a report: a summary, a diagram of how the parts call each other, and the areas changed opened down to a function's code](docs/report.png)
+![The top of a report: the call, the share of the diff to read, and the places to check with their code](docs/report.png)
 
 **The change** describes what the change does, without judgement.
 

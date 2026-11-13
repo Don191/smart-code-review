@@ -299,6 +299,30 @@ footer{margin-top:32px;color:var(--muted);font-size:12px;text-align:center}
 .fact-group .fact{display:flex}
 .fg-name{font-size:12px;color:var(--muted)}
 .overview.later{margin-top:16px}
+.decide{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:24px 28px;margin:0 0 28px}
+.d-ok{--dc:var(--met)}.d-warn{--dc:var(--minor)}.d-bad{--dc:var(--blocker)}
+.d-top{display:flex;gap:28px;align-items:center}
+.d-call{flex:none;display:flex;align-items:center;gap:14px;min-width:230px}
+.d-icon circle{fill:var(--dc)}.d-icon path{fill:none;stroke:#fff;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.d-verb{font-size:24px;font-weight:700;letter-spacing:-.02em;line-height:1.1}
+.d-sub{font-size:13px;color:var(--muted);margin-top:3px}
+.d-head{margin:0;font-size:17px;line-height:1.45;color:var(--fg);flex:1;padding-left:28px;border-left:1px solid var(--line);text-wrap:pretty}
+.d-read{margin-top:20px}
+.d-bar{display:flex;height:8px;border-radius:99px;overflow:hidden;background:var(--panel2);gap:2px}
+.d-bar .need{background:var(--accent)}.d-bar .skip{background:color-mix(in srgb,var(--muted) 28%,transparent)}
+.d-legend{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:13px;color:var(--muted);margin-top:8px}
+.d-legend span{display:inline-flex;align-items:center;gap:6px}.d-legend b{color:var(--fg)}
+.sw.need{background:var(--accent)}.sw.skip{background:color-mix(in srgb,var(--muted) 35%,transparent)}
+.d-list{list-style:none;margin:20px 0 0;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}
+.d-item{border:1px solid var(--line);border-radius:12px;padding:12px 14px;min-width:0;display:flex;flex-direction:column;gap:6px}
+.d-ih{display:flex;align-items:flex-start;gap:8px}
+.d-ih svg{margin-top:2px}
+.d-ih b{flex:1;font-size:14px;line-height:1.35}
+.d-ih .loc{text-decoration:none}.d-ih .loc:hover{text-decoration:underline}
+.d-item p{margin:0;font-size:13px;color:var(--muted);line-height:1.45}
+.d-item .code{font-size:11.5px;margin-top:auto}
+.d-item .ln .no{width:32px}
+.d-more{display:inline-block;margin-top:12px;font-size:13px;color:var(--muted)}
 .seg.k-agents{--rc:var(--k-agents)}.sw.k-agents{background:var(--k-agents)}
 .agents-panel{margin:0 0 28px;border-color:color-mix(in srgb,var(--k-agents) 35%,var(--line))}
 .agents-panel h3{display:flex;align-items:center;gap:8px;margin-bottom:4px}
@@ -432,6 +456,9 @@ footer{margin-top:48px}
   .tabs>label{padding:8px 10px}
   .hero{padding:16px}
   .c-sum{font-size:20px}
+  .decide{padding:18px}
+  .d-top{flex-direction:column;align-items:flex-start;gap:12px}
+  .d-head{padding-left:0;border-left:0;font-size:16px}
   main{padding-top:24px}
   .cfile>.f-body{padding-left:8px}
   .s-body{padding-left:10px}
@@ -450,6 +477,29 @@ footer{margin-top:48px}
     <button class="theme" type="button" aria-label="Switch light and dark" data-theme-toggle><svg width="16" height="16" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 1.5a6.5 6.5 0 0 1 0 13z" fill="currentColor"/></svg></button>
   </header>
 
+  <section class="decide d-bad" aria-label="Decision">
+    <div class="d-top">
+      <div class="d-call"><svg class="d-icon" viewBox="0 0 20 20" width="40" height="40" aria-hidden="true"><circle cx="10" cy="10" r="9"/><path d="M6.5 6.5l7 7M13.5 6.5l-7 7"/></svg><div><div class="d-verb">Send back</div><div class="d-sub">Risk 89 · 3 places to check</div></div></div>
+      <p class="d-head">The change introduces SQL injection vulnerabilities and insecure server-side file operations.</p>
+    </div>
+    <div class="d-read">
+      <div class="d-bar" role="img" aria-label="100% of changed lines need reading"><i class="need" style="width:100%"></i><i class="skip" style="width:0%"></i></div>
+      <div class="d-legend"><span><i class="sw need"></i><b>89</b> lines to read</span><span class="muted">8 files</span></div>
+    </div>
+    <ol class="d-list"><li class="d-item">
+      <div class="d-ih"><svg class="sev sev-blocker" width="16" height="16" viewBox="0 0 16 16" aria-label="Blocker" role="img"><polygon points="5,1 11,1 15,5 15,11 11,15 5,15 1,11 1,5"/></svg><b>SQL built from a string</b><a class="loc" href="#F13" data-open-tab="tab-findings" data-target="F13">discount.get.ts:6</a></div>
+      <p>Joining values into SQL allows SQL injection.</p>
+      <div class="code"><div class="ln ln-add"><span class="no">4</span><span class="mk">+</span><span class="tx">  const { code } = getQuery(event)</span></div><div class="ln ln-add"><span class="no">5</span><span class="mk">+</span><span class="tx">  const codes = JSON.parse(readFileSync(&#39;./data/discounts.json&#39;, &#39;utf8&#39;))</span></div><div class="ln ln-add ln-hit"><span class="no">6</span><span class="mk">+</span><span class="tx">  const rows = await db.$queryRawUnsafe(`SELECT percent FROM discounts WHERE code = &#39;${code}&#39;`)</span></div><div class="ln ln-add"><span class="no">7</span><span class="mk">+</span><span class="tx">  return { percent: rows[0]?.percent ?? codes[code as string] ?? 0 }</span></div><div class="ln ln-add"><span class="no">8</span><span class="mk">+</span><span class="tx">})</span></div></div>
+    </li><li class="d-item">
+      <div class="d-ih"><svg class="sev sev-major" width="16" height="16" viewBox="0 0 16 16" aria-label="Major" role="img"><polygon points="8,1.5 15,14.5 1,14.5"/></svg><b>Agent may run any shell command</b><a class="loc" href="#F1" data-open-tab="tab-findings" data-target="F1">settings.json:3</a></div>
+      <p>This allows every shell command without asking, including ones that delete files or send data out.</p>
+      <div class="code"><div class="ln ln-add"><span class="no">1</span><span class="mk">+</span><span class="tx">{</span></div><div class="ln ln-add"><span class="no">2</span><span class="mk">+</span><span class="tx">  &quot;permissions&quot;: {</span></div><div class="ln ln-add ln-hit"><span class="no">3</span><span class="mk">+</span><span class="tx">    &quot;allow&quot;: [&quot;Bash(yarn *)&quot;, &quot;Bash(*)&quot;]</span></div><div class="ln ln-add"><span class="no">4</span><span class="mk">+</span><span class="tx">  },</span></div><div class="ln ln-add"><span class="no">5</span><span class="mk">+</span><span class="tx">  &quot;hooks&quot;: {</span></div></div>
+    </li><li class="d-item">
+      <div class="d-ih"><svg class="sev sev-major" width="16" height="16" viewBox="0 0 16 16" aria-label="Major" role="img"><polygon points="8,1.5 15,14.5 1,14.5"/></svg><b>Prop changed in the child</b><a class="loc" href="#F4" data-open-tab="tab-findings" data-target="F4">CartSummary.vue:11</a></div>
+      <p>Props belong to the parent.</p>
+      <div class="code"><div class="ln ln-add"><span class="no">9</span><span class="mk">+</span><span class="tx">  await save()</span></div><div class="ln ln-add"><span class="no">10</span><span class="mk">+</span><span class="tx">  saving.value = false</span></div><div class="ln ln-add ln-hit"><span class="no">11</span><span class="mk">+</span><span class="tx">  props.note = &#39;Saved&#39;</span></div><div class="ln ln-add"><span class="no">12</span><span class="mk">+</span><span class="tx">}</span></div><div class="ln ln-ctx"><span class="no">13</span><span class="mk"> </span><span class="tx">&lt;/script&gt;</span></div></div>
+    </li></ol><a class="d-more" href="#tab-findings" data-open-tab="tab-findings">13 more findings in Review</a>
+  </section>
   <div class="parts">
     <input type="radio" name="part" id="part-change" checked><label for="part-change"><span class="p-t">The change</span><span class="p-s">What it does, area by area</span></label>
     <input type="radio" name="part" id="part-review"><label for="part-review" class="v-bad"><span class="p-t">Review <span class="pill">Changes needed</span></span><span class="p-s">Risk, issues and requirements</span></label>
@@ -656,19 +706,6 @@ footer{margin-top:48px}
     </section>
     </div>
     <div class="part" data-part="part-review">
-  <section class="verdict v-bad" aria-label="Verdict">
-    <div class="g"><svg class="gauge" viewBox="0 0 128 76" role="img" aria-label="Risk 89 out of 100">
-  <path d="M12 68 A52 52 0 0 1 116 68" class="gauge-track"/>
-  <path d="M12 68 A52 52 0 0 1 116 68" class="gauge-val" style="stroke:rgb(237 87 52);stroke-dasharray:145.4 163.4"/>
-  <text x="64" y="60" class="gauge-num">89</text>
-</svg>
-<div class="gauge-label">High risk</div></div>
-    <div class="v-text">
-      <span class="pill">Changes needed</span>
-      <p class="headline">The change introduces SQL injection vulnerabilities and insecure server-side file operations.</p>
-    </div>
-  </section>
-
   <div class="signals">
     <a class="signal" href="#tab-findings" data-open-tab="tab-findings"><div class="sig-label">Findings</div><div class="sig-sevs"><span class="sig-sev" title="Blocker"><svg class="sev sev-blocker" width="16" height="16" viewBox="0 0 16 16" aria-label="Blocker" role="img"><polygon points="5,1 11,1 15,5 15,11 11,15 5,15 1,11 1,5"/></svg><b>1</b></span><span class="sig-sev" title="Major"><svg class="sev sev-major" width="16" height="16" viewBox="0 0 16 16" aria-label="Major" role="img"><polygon points="8,1.5 15,14.5 1,14.5"/></svg><b>5</b></span><span class="sig-sev" title="Minor"><svg class="sev sev-minor" width="16" height="16" viewBox="0 0 16 16" aria-label="Minor" role="img"><circle cx="8" cy="8" r="6"/></svg><b>9</b></span><span class="sig-sev" title="Nit"><svg class="sev sev-nit" width="16" height="16" viewBox="0 0 16 16" aria-label="Nit" role="img"><circle cx="8" cy="8" r="3.5"/></svg><b>1</b></span></div></a>
     <a class="signal" href="#tab-req" data-open-tab="tab-req"><div class="sig-label">Requirements</div><div class="sig-row"><svg class="ring" width="46" height="46" viewBox="0 0 56 56" role="img" aria-label="5/9"><circle r="22" cx="28" cy="28" class="ring-track"/><circle r="22" cx="28" cy="28" class="ring-seg c-met" style="stroke-dasharray:76.79 61.44;stroke-dashoffset:0.00"/><circle r="22" cx="28" cy="28" class="ring-seg c-partial" style="stroke-dasharray:15.36 122.87;stroke-dashoffset:-76.79"/><circle r="22" cx="28" cy="28" class="ring-seg c-missing" style="stroke-dasharray:46.08 92.15;stroke-dashoffset:-92.15"/><text x="28" y="32.5" class="ring-num">5/9</text></svg><span class="sig-note">3 missing</span></div></a>
