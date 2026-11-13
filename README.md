@@ -1,32 +1,58 @@
 # smart-code-review
 
-AI code review that writes a visual HTML report, built so a pull request can be decided in seconds. The report opens on the call (merge, check these first, or send back), how much of the diff is routine and can be skipped, and up to three places to check with their code shown. Below that are two parts you click into only where you need more.
-
-![The top of a report: the call, the share of the diff to read, and the places to check with their code](docs/report.png)
-
-**The change** describes what the change does, without judgement.
-
-- **Summary first.** What the change does in one sentence, then counts: files, areas, functions added, changed and removed, API routes, dependencies, environment variables, and how long it will take to review.
-- **By feature.** A large PR is split into the features and chores it contains (gift cards, order history, dependency upgrades, agent setup), each with its areas, its findings and its files down to the functions that belong to it. Switch to **By area** to see the same change by workspace or layer.
-- **How it fits together.** A diagram of the main path through the change, from the UI to the API, for example.
-- **Areas changed.** One short section per module: each workspace in a monorepo (portal, api, ui...) or each layer (frontend, backend, shared, tests, config). Each opens to its files, each file to the functions, components and templates it changes, and each of those to its lines.
-- **AI agent setup.** Changes to CLAUDE.md, AGENTS.md, `.claude/` skills, subagents, commands, hooks and settings, MCP servers, Copilot and Cursor rules get their own section. The review flags agent permissions that allow any shell command, permission checks turned off, and secrets in agent config.
-- **Outside the code.** API routes, pages, dependencies, environment variables, config keys and migrations that were added, changed or removed.
-
-**Review** gives the reviewer's assessment.
-
-- **Verdict first.** A verdict, a risk score and one sentence, then findings by severity, requirements met, tests and size.
-- **Impact by area.** The same areas, with their impact and findings.
-- **Where to look.** A map of the changed files coloured by risk, the three findings to read first, and a grid of findings by kind.
-- **The detail.** Each finding opens to show the lines it is about and a suggested change. Each requirement opens to show the evidence.
-
-It also:
-
-- **Knows what the change was for.** Linked Azure DevOps work items, Notion pages, GitHub issues and Jira tickets are fetched, and every acceptance criterion is checked against the diff.
-- **Is built for JS, TS, Vue, Node and Nuxt**, with plugins for other languages.
-- **Is one file.** The report has no external assets, so it can be attached to a CI run, emailed or opened offline.
+AI code review that writes a visual HTML report, built so a pull request can be understood and decided quickly. The report has two parts. **The change** describes what the change does, without judgement. **Review** gives the reviewer's assessment. Each starts with a short summary, and you click into detail only where you need it.
 
 Sample reports: [a large PR with several features](examples/acme-release.html), [saved carts (planted problems, with requirements)](examples/saved-carts.html) and [a real change from webcontainers-demo](examples/webcontainers-tui.html). Download and open them in a browser.
+
+## The change
+
+**Summary first.** What the change does in one sentence, then counts: files, areas, functions added, changed and removed, tests, API routes, dependencies, environment variables, agent setup changes, and how long it will take to review.
+
+![A one-sentence summary of the change with counts](docs/change-summary.png)
+
+**How it fits together.** A diagram of the main path through the change, from the UI to the API, for example.
+
+![The flow through the change as numbered steps between parts of the system](docs/flow.png)
+
+**By feature.** A large PR is split into the features and chores it contains (gift cards, order history, dependency upgrades, agent setup). Each shows the areas it touches, what it adds and changes, its findings and its share of the diff. Switch to **By area** to see the same change by workspace in a monorepo (portal, api, ui...) or by layer (frontend, backend, shared, tests, config).
+
+![A large PR split into features, each with its areas, changes, findings and size](docs/by-feature.png)
+
+**Drill down.** Each feature or area opens to its files, each file to the functions, components, routes and templates it changes with a description in words, and each of those to its lines.
+
+![A feature opened to its files, and a file opened to the route it adds](docs/drill-down.png)
+
+**Outside the code.** Environment variables and migrations first, then API routes, pages, components, dependencies, config and AI agent setup that were added, changed or removed. Agent setup covers CLAUDE.md, AGENTS.md, `.claude/` skills, subagents, commands, hooks and settings, MCP servers, and Copilot and Cursor rules. Every entry links to its file.
+
+![Environment variables, migrations, API routes, pages, components, dependencies and agent setup that the change touches](docs/outside.png)
+
+## Review
+
+**Signals.** Findings by severity, requirements met, tests and size, each linking to its detail.
+
+![Counts of findings by severity, requirements met, test changes and size](docs/review-signals.png)
+
+**Where the risk is.** A map of the changed files, grouped by area, sized by lines changed and coloured by risk, next to the findings to read first.
+
+![A treemap of changed files coloured by risk, beside the findings to read first](docs/risk-map.png)
+
+**Requirements.** Linked Azure DevOps work items, Notion pages, GitHub issues and Jira tickets are fetched, and every acceptance criterion is checked against the diff. Each square is one criterion: met, missing or unclear. Each opens to the evidence.
+
+![Work items with one square per acceptance criterion](docs/requirements.png)
+
+**Feedback on findings.** Mark each finding as agreed, fixed, won't fix or discuss, and add a note. Notes are kept in your browser, and **To handle** filters to what's still open. Export the notes as JSON to share them or to build them into the next report (`--annotations notes.json`). Finding ids are stable, so notes carry over when the change is reviewed again. **Copy as Markdown** gives a list to paste into the PR.
+
+![Findings with statuses and notes, and the feedback bar](docs/feedback.png)
+
+Each finding also opens to the lines it is about and a suggested change.
+
+## The call
+
+Above both parts is the call: merge, check these first, or send back, with how much of the diff needs reading and the places to check, with their code.
+
+![The call, the lines to read, and the places to check](docs/decide.png)
+
+It is built for JS, TS, Vue, Node and Nuxt, with plugins for other languages. The report is one file with no external assets, so it can be attached to a CI run, emailed or opened offline.
 
 ## Run it
 
@@ -41,6 +67,9 @@ npx github:Don191/smart-code-review --pr https://github.com/owner/repo/pull/123
 
 # Uncommitted changes, with requirements kept in a file
 npx github:Don191/smart-code-review --working --context requirements.md --open
+
+# Again, with the notes exported from the last report built in
+npx github:Don191/smart-code-review --annotations review-notes.json
 ```
 
 The report is written to `reviews/<branch>.html`. Run with `--help` for every option.
@@ -167,6 +196,7 @@ const result = toAgilityResult(r)
 - Severities map to critical, high, medium and low (`SEVERITY_LEVEL`).
 - Finding ids are stable across runs of the same change, so a finding can be tracked from one review to the next.
 - Acceptance criteria that aren't clearly met become `questions` for the owner of the work item.
+- Notes people add in the report come back on each finding as `feedback` (agreed, fixed, won't fix or discuss), after `applyAnnotations(review, parseAnnotations(json))`.
 - With `env.AGILITY_MODE = 'lite'`, or `offline: true`, nothing is fetched. Work items are passed in as `context`, and the model is whatever `provider` is passed in, or none for static checks only.
 
 ## GitHub Action

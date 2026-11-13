@@ -144,6 +144,17 @@ export interface ReviewMeta {
     plugins: string[];
     connectors: string[];
 }
+/** Where a finding stands after people have looked at it. */
+export type FeedbackStatus = 'open' | 'agreed' | 'fixed' | 'wont-fix' | 'discuss';
+/** A reviewer's note on a finding. Finding ids are stable, so notes carry over to the next review of the same change. */
+export interface Annotation {
+    findingId: string;
+    status: FeedbackStatus;
+    note?: string;
+    by?: string;
+    /** ISO time it was last changed. */
+    at: string;
+}
 export interface Review {
     meta: ReviewMeta;
     verdict: Verdict;
@@ -180,6 +191,8 @@ export interface Review {
     };
     diff: DiffFile[];
     warnings: string[];
+    /** Notes and statuses people have added to findings. */
+    annotations?: Annotation[];
 }
 /** What a review starts from: a diff and whatever is known about the change. */
 export interface ChangeInput {

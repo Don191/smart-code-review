@@ -4,6 +4,7 @@ import { SEVERITY_LEVEL } from "../types.js";
 const VERDICT = { approve: 'pass', comment: 'warn', 'request-changes': 'fail' };
 export function toAgilityResult(review, opts = {}) {
     const diffByPath = new Map(review.diff.map(d => [d.path, d]));
+    const notes = new Map((review.annotations ?? []).map(a => [a.findingId, a]));
     const findings = review.findings.map(f => {
         const file = f.file ? diffByPath.get(f.file) : undefined;
         const lines = file && f.line ? excerpt(file, f.line, 2) : [];
@@ -17,7 +18,8 @@ export function toAgilityResult(review, opts = {}) {
             line: f.line,
             evidence: lines.length ? [{ kind: 'code', label: `${f.file}:${f.line}`, content: lines.map(l => `${l.type === 'add' ? '+' : l.type === 'del' ? '-' : ' '} ${l.content}`).join('\n') }] : undefined,
             fix: f.suggestion?.after,
-            agent: 'reviewer'
+            agent: 'reviewer',
+            feedback: notes.has(f.id) ? (({ findingId, ...rest }) => rest)(notes.get(f.id)) : undefined
         };
     });
     const titles = new Map(review.context.map(c => [c.id, c.title]));

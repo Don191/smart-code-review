@@ -8,6 +8,7 @@ import { fromGit } from './sources/git.ts'
 import { fromGitHubPr } from './sources/github.ts'
 import { parseContext } from './connectors/index.ts'
 import { providerFromEnv } from './llm/providers.ts'
+import { applyAnnotations, parseAnnotations } from './annotations.ts'
 import { review } from './review.ts'
 import { renderHtml } from './report/html.ts'
 import type { ReviewPlugin } from './plugins/types.ts'
@@ -33,6 +34,7 @@ Options
   --effort <level>       Claude effort: low, medium, high (default), xhigh, max
   --title <text>         Title for the report
   --body-file <file>     PR description, searched for linked work items
+  --annotations <file>   Notes exported from an earlier report, built into this one
   --url <url>            Link for the title
   --out <file>           HTML report path (default: reviews/<branch>.html)
   --json <file>          Also write the review as JSON
@@ -66,6 +68,7 @@ async function main() {
       model: { type: 'string' },
       title: { type: 'string' },
       'body-file': { type: 'string' },
+      annotations: { type: 'string' },
       url: { type: 'string' },
       out: { type: 'string' },
       json: { type: 'string' },
@@ -105,7 +108,7 @@ async function main() {
   // Optional module names, e.g. {"modules": [{"name": "Portal", "paths": ["apps/portal/"]}]}
   const config = existsSync('.smart-code-review.json') ? JSON.parse(readFileSync('.smart-code-review.json', 'utf8')) : {}
 
-  const result = await review(input, {
+  const raw = await review(input, {
     provider,
     modules: config.modules,
     plugins,
@@ -114,6 +117,8 @@ async function main() {
     instructions: instructionsFile ? readFileSync(instructionsFile, 'utf8') : undefined,
     onProgress: s => log(`· ${s}`)
   })
+
+  const result = a.annotations ? applyAnnotations(raw, parseAnnotations(readFileSync(a.annotations, 'utf8'))) : raw
 
   const slug = (input.head ?? 'review').replace(/[^\w.-]+/g, '-')
   const out = resolve(a.out ?? `reviews/${slug}.html`)

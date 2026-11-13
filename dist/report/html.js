@@ -96,15 +96,27 @@ function suggestion(f) {
     const after = f.suggestion.after.split('\n');
     return `<div class="fix"><div class="fix-label">Suggested change</div><div class="code">${before.map(l => `<div class="ln ln-del"><span class="mk">−</span><span class="tx">${esc(l) || ' '}</span></div>`).join('')}${after.map(l => `<div class="ln ln-add"><span class="mk">+</span><span class="tx">${esc(l) || ' '}</span></div>`).join('')}</div></div>`;
 }
-function findingRow(f, files) {
+export const FEEDBACK = { open: 'Open', agreed: 'Agreed', fixed: 'Fixed', 'wont-fix': "Won't fix", discuss: 'Discuss' };
+/** Status buttons and a note box, so feedback on a finding can be tracked in the report itself. */
+function annotation(f, a) {
+    const st = a?.status ?? 'open';
+    return `<div class="anno" data-anno="${esc(f.id)}">
+    <div class="anno-st" role="group" aria-label="Status">${Object.keys(FEEDBACK).map(s => `<button type="button" class="st-${s}${s === st ? ' on' : ''}" data-anno-status="${s}">${FEEDBACK[s]}</button>`).join('')}</div>
+    <textarea class="anno-note" rows="2" placeholder="Add a note: why, who will fix it, a link...">${esc(a?.note ?? '')}</textarea>
+    <div class="anno-by muted">${a && (a.note || a.status !== 'open') ? `${a.by ? `${esc(a.by)} · ` : ''}${esc(a.at.slice(0, 16).replace('T', ' '))}` : ''}</div>
+  </div>`;
+}
+function findingRow(f, files, a, editable = false) {
     const file = f.file ? files.get(f.file) : undefined;
     const ex = file && f.line ? excerpt(file, f.line, 3) : [];
-    return `<details class="finding" id="${f.id}" data-sev="${f.severity}" data-cat="${f.category}">
-  <summary>${sevIcon(f.severity)}<span class="f-title">${esc(f.title)}</span><span class="tag cat-${f.category}">${CAT_LABEL[f.category] ?? esc(f.category)}</span>${f.file ? `<span class="loc">${esc(base(f.file))}${f.line ? `:${f.line}` : ''}</span>` : ''}</summary>
+    const st = a?.status ?? 'open';
+    return `<details class="finding" id="${f.id}" data-sev="${f.severity}" data-cat="${f.category}" data-status="${st}">
+  <summary>${sevIcon(f.severity)}<span class="f-title">${esc(f.title)}</span><span class="anno-pill st-${st}">${st === 'open' ? '' : FEEDBACK[st]}</span>${a?.note ? '<span class="anno-has" title="Has a note">✎</span>' : ''}<span class="tag cat-${f.category}">${CAT_LABEL[f.category] ?? esc(f.category)}</span>${f.file ? `<span class="loc">${esc(base(f.file))}${f.line ? `:${f.line}` : ''}</span>` : ''}</summary>
   <div class="f-body">
     <p>${esc(f.detail)}</p>
     ${ex.length ? diffLines(ex, f.line) : ''}
     ${suggestion(f)}
+    ${editable ? annotation(f, a) : ''}
     <div class="f-meta">${SEV_LABEL[f.severity]} · ${f.file ? `<a href="#${fileId(f.file)}" data-open-file="${esc(f.file)}">${esc(f.file)}${f.line ? `:${f.line}` : ''}</a> · ` : ''}${f.source === 'ai' ? 'Found by AI review' : `Static check <code>${esc(f.ruleId)}</code>`}</div>
   </div>
 </details>`;
@@ -266,7 +278,15 @@ function symbolRow(y) {
   </details>`;
 }
 function factItem(f, withFile = false) {
-    return `<a class="fact" href="#c${fileId(f.file)}" data-open-cfile="${esc(f.file)}">${actIcon(f.action)}<code>${esc(f.label)}</code>${f.detail ? `<span class="muted">${esc(f.detail)}</span>` : ''}${withFile ? `<span class="loc">${esc(base(f.file))}</span>` : ''}</a>`;
+    return `<a class="fact" href="#c${fileId(f.file)}" data-open-cfile="${esc(f.file)}">${actIcon(f.action)}<code>${esc(f.label)}</code>${f.detail ? `<span class="muted">${esc(f.detail)}</span>` : ''}${withFile && base(f.file) !== f.label ? `<span class="loc">${esc(factLoc(f.file))}</span>` : ''}</a>`;
+}
+/** Where a fact lives: the file name, or for a manifest the folder it's in, so two package.json files can be told apart. */
+function factLoc(path) {
+    const b = base(path);
+    if (!/^(package\.json|nuxt\.config\.\w+|\.env\b.*)$/.test(b))
+        return b;
+    const parts = path.split('/');
+    return parts.length > 1 ? `${parts[parts.length - 2]}/${b}` : b;
 }
 /** One file in "The change": what it is, then the functions and components it changes, then its diff. */
 function changeFile(f, d, root, only, idPrefix = 'c') {
@@ -538,6 +558,7 @@ function decideCard(review, diffByPath) {
 /** Renders a review as one self-contained HTML page. */
 export function renderHtml(review, opts = {}) {
     const diffByPath = new Map(review.diff.map(d => [d.path, d]));
+    const notes = new Map((review.annotations ?? []).map(a => [a.findingId, a]));
     const counts = Object.fromEntries(SEVERITIES.map(s => [s, review.findings.filter(f => f.severity === s).length]));
     const v = VERDICT[review.verdict];
     const add = review.diff.reduce((s, f) => s + f.additions, 0);
@@ -562,9 +583,18 @@ export function renderHtml(review, opts = {}) {
         ? `<div class="filters" role="toolbar" aria-label="Filter findings">
         <button class="chip on" data-filter-sev="" data-filter-cat="">All <b>${review.findings.length}</b></button>
         ${SEVERITIES.filter(s => counts[s]).map(s => `<button class="chip" data-filter-sev="${s}" data-filter-cat="">${sevIcon(s, 12)} ${SEV_LABEL[s]} <b>${counts[s]}</b></button>`).join('')}
+        <button class="chip" data-filter-todo>To handle <b class="todo-n">${review.findings.filter(f => ['open', 'discuss'].includes(notes.get(f.id)?.status ?? 'open')).length}</b></button>
         <span class="sp"></span><button class="chip ghost" data-expand="findings">Expand all</button>
       </div>
-      <div class="list" id="findings-list">${review.findings.map(f => findingRow(f, diffByPath)).join('')}</div>`
+      <div class="feedback" data-key="${esc(review.meta.url || review.meta.head || review.meta.title)}" data-title="${esc(review.meta.title)}">
+        <span class="fb-counts">${Object.keys(FEEDBACK).map(s => `<span class="fb-c st-${s}" data-fb="${s}"><i></i>${FEEDBACK[s]} <b>${review.findings.filter(f => (notes.get(f.id)?.status ?? 'open') === s).length}</b></span>`).join('')}</span>
+        <span class="sp"></span>
+        <input class="fb-name" placeholder="Your name" aria-label="Your name" size="12">
+        <button class="chip ghost" data-fb-copy>Copy as Markdown</button>
+        <button class="chip ghost" data-fb-export>Export notes</button>
+        <label class="chip ghost">Import<input type="file" accept=".json,application/json" data-fb-import hidden></label>
+      </div>
+      <div class="list" id="findings-list">${review.findings.map(f => findingRow(f, diffByPath, notes.get(f.id), true)).join('')}</div>`
         : '<p class="empty">No findings.</p>';
     const filesTab = `<div class="list">${review.files.map(f => {
         const fs = review.findings.filter(x => x.file === f.path);
