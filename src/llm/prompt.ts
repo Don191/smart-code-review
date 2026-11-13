@@ -60,13 +60,13 @@ export const AI_SCHEMA = {
     },
     symbols: {
       type: 'array',
-      description: 'One entry per item under "Changed functions and components".',
+      description: 'One entry for every item under "Changed functions and components", in the same order. Do not skip any.',
       items: {
         type: 'object',
         properties: {
           file: { type: 'string' },
           name: { type: 'string' },
-          change: { type: 'string', description: 'What changed in it, under 12 words. Facts only, e.g. "Now saves each item to /api/cart".' }
+          change: { type: 'string', description: 'One sentence, under 20 words, on what it does; for a changed item, what is different now. Facts only, e.g. "Posts the cart items to /api/cart and sets saving while it waits".' }
         },
         required: ['file', 'name', 'change']
       }
@@ -115,6 +115,8 @@ export const SYSTEM_PROMPT = `You describe and then review code changes, like a 
 Your reply has two separate parts.
 1. The description: "change", "modules", "files" and "symbols". Say what the code now does, as plain facts. No judgement, no problems, no praise, no words like "critical", "broken", "improves" or "properly".
 2. The review: "verdict", "risk", "headline", "summary", "findings", "requirements" and "tests".
+
+Files under "AI agent setup" (CLAUDE.md, AGENTS.md, .claude/ skills, subagents, commands, hooks and settings, MCP config) instruct AI coding agents. Describe what an agent will now do differently. In the review, flag permissions or hooks that let an agent run commands or reach data more widely, secrets in these files, and instructions that conflict with each other.
 
 Report only real problems in the changed lines: bugs, security holes, data loss, performance traps, missing tests for risky logic, accessibility failures, and requirements the change does not meet. Skip style preferences and anything a formatter or linter would fix. Do not praise. If the change is fine, say so and return few or no findings.
 

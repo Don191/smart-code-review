@@ -10,6 +10,8 @@ export { javascript, typescript } from './plugins/javascript.ts'
 export { vue } from './plugins/vue.ts'
 export { nuxt, node } from './plugins/nuxt.ts'
 export { python } from './plugins/others.ts'
+export { agents } from './plugins/agents.ts'
+export { agentLabel, describeSymbol } from './facts.ts'
 export {
   gatherContext,
   parseContext,

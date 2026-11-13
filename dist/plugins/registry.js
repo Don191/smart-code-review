@@ -1,8 +1,9 @@
+import { agents } from "./agents.js";
 import { javascript, typescript } from "./javascript.js";
 import { vue } from "./vue.js";
 import { nuxt, node } from "./nuxt.js";
 import { python, plain } from "./others.js";
-export const BUILT_IN_PLUGINS = [typescript, javascript, vue, nuxt, node, python, ...plain];
+export const BUILT_IN_PLUGINS = [agents, typescript, javascript, vue, nuxt, node, python, ...plain];
 const extOf = (path) => {
     const m = path.toLowerCase().match(/(\.d)?\.[a-z0-9]+$/);
     return m ? m[0].replace(/^\.d\./, '.') : '';

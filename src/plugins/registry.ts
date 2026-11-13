@@ -1,10 +1,11 @@
+import { agents } from './agents.ts'
 import { javascript, typescript } from './javascript.ts'
 import { vue } from './vue.ts'
 import { nuxt, node } from './nuxt.ts'
 import { python, plain } from './others.ts'
 import type { ReviewPlugin } from './types.ts'
 
-export const BUILT_IN_PLUGINS: ReviewPlugin[] = [typescript, javascript, vue, nuxt, node, python, ...plain]
+export const BUILT_IN_PLUGINS: ReviewPlugin[] = [agents, typescript, javascript, vue, nuxt, node, python, ...plain]
 
 const extOf = (path: string) => {
   const m = path.toLowerCase().match(/(\.d)?\.[a-z0-9]+$/)

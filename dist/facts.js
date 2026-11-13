@@ -1,3 +1,4 @@
+import { AGENT_FILE } from "./modules.js";
 const JS_DECLS = [
     [/^\s*(?:export\s+)?(?:default\s+)?(?:async\s+)?function\s*\*?\s*([A-Za-z_$][\w$]*)\s*[(<]/, 'function'],
     [/^\s*(?:export\s+)?(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*(?::[^=]+)?=\s*(?:async\s+)?(?:\([^)]*\)|[A-Za-z_$][\w$]*)\s*(?::\s*[^=]+)?=>/, 'function'],
@@ -171,6 +172,9 @@ export function changeFacts(file) {
     if (/\.vue$/.test(p) && /(^|\/)components\//.test(p) && file.status !== 'modified') {
         facts.push({ kind: 'component', action, label: p.split('/').pop().replace(/\.vue$/, ''), file: p });
     }
+    const agent = agentLabel(p);
+    if (agent)
+        facts.push({ kind: 'agent', action, label: agent.label, detail: agent.detail, file: p });
     if (/(^|\/)migrations?\//.test(p))
         facts.push({ kind: 'migration', action, label: p.split('/').pop(), file: p });
     const added = file.hunks.flatMap(h => h.lines.filter(l => l.type === 'add'));
@@ -209,4 +213,61 @@ export function changeFacts(file) {
             facts.push({ kind: 'config', action: 'changed', label: k, file: p });
     }
     return facts;
+}
+const NOT_CALLS = new Set([...NOT_NAMES, 'typeof', 'new', 'await', 'Math', 'String', 'Number', 'Boolean', 'Array', 'Object', 'JSON', 'console.log', 'require']);
+/** A plain description from the lines themselves, for when the model gives none: what it calls. */
+export function describeSymbol(s) {
+    const calls = (type) => {
+        const out = new Set();
+        for (const l of s.lines) {
+            if (l.type !== type)
+                continue;
+            for (const m of l.content.matchAll(/(?:^|[^\w$.])((?:this\.|[A-Za-z_$][\w$]*\.)?[A-Za-z_$][\w$]*)\s*\(/g)) {
+                const name = m[1].replace(/^this\./, '');
+                if (name !== s.name && !NOT_CALLS.has(name) && !NOT_CALLS.has(name.split('.')[0]))
+                    out.add(name);
+            }
+        }
+        return [...out];
+    };
+    const list = (xs) => xs.slice(0, 4).join(', ') + (xs.length > 4 ? ` and ${xs.length - 4} more` : '');
+    const n = s.lines.filter(l => l.type === (s.action === 'removed' ? 'del' : 'add')).length;
+    const kind = s.kind === 'template' ? 'template' : s.kind;
+    if (s.action === 'removed')
+        return `Removed ${kind}, ${n} line${n === 1 ? '' : 's'}.`;
+    if (s.kind === 'test')
+        return s.action === 'added' ? 'New test.' : 'Test changed.';
+    const added = calls('add');
+    if (s.action === 'added')
+        return `New ${kind}, ${n} line${n === 1 ? '' : 's'}${added.length ? `. Calls ${list(added)}` : ''}.`;
+    const before = new Set(calls('del'));
+    const fresh = added.filter(c => !before.has(c));
+    return fresh.length ? `Now also calls ${list(fresh)}.` : `${n} line${n === 1 ? '' : 's'} changed.`;
+}
+/** What an agent setup file is: "Skill: deploy", "Subagent: tester", "Instructions: CLAUDE.md". */
+export function agentLabel(p) {
+    if (!AGENT_FILE.test(p))
+        return undefined;
+    const name = p.split('/').pop();
+    const stem = name.replace(/\.(md|mdc|json|ya?ml|toml|prompt\.md|agent\.md|chatmode\.md)$/i, '');
+    let m;
+    if ((m = p.match(/(?:^|\/)skills\/([^/]+)\//)))
+        return { label: `Skill: ${m[1]}`, detail: name === 'SKILL.md' ? undefined : name };
+    if (/(?:^|\/)\.claude\/agents\/|\.github\/agents\/|\.agents\//.test(p))
+        return { label: `Subagent: ${stem}` };
+    if (/(?:^|\/)\.claude\/commands\/|\.github\/prompts\//.test(p))
+        return { label: `Command: /${stem.replace(/\.prompt$/, '')}` };
+    if (/(?:^|\/)\.claude\/hooks\//.test(p))
+        return { label: `Hook: ${name}` };
+    if (/(?:^|\/)\.claude\/settings(\.local)?\.json$/.test(p))
+        return { label: 'Settings: permissions and hooks', detail: name };
+    if (/(?:^|\/)\.mcp\.json$/.test(p))
+        return { label: 'MCP servers', detail: name };
+    if (/(?:^|\/)\.cursor\/rules\//.test(p))
+        return { label: `Cursor rule: ${stem}` };
+    if (/\.smart-code-review\./.test(p))
+        return { label: 'Review rules', detail: name };
+    if (/\.(md|mdc)$/i.test(name) || /rules$/.test(name))
+        return { label: `Instructions: ${p.includes('/') && !p.startsWith('.') ? p : name}` };
+    return { label: `Agent config: ${name}` };
 }

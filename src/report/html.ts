@@ -167,9 +167,10 @@ const KIND_ICON: Record<ModuleSummary['kind'], string> = {
   shared: '<path d="M10 2.5l7 3.8v7.4l-7 3.8-7-3.8V6.3z"/><path d="M3 6.3l7 3.8 7-3.8M10 10.1v7.4"/>',
   tests: '<path d="M7.5 2.5h5M8.5 2.5v5L4 15.5a1.4 1.4 0 0 0 1.2 2h9.6a1.4 1.4 0 0 0 1.2-2L11.5 7.5v-5"/><path d="M6 12.5h8"/>',
   docs: '<path d="M5 2.5h7l3.5 3.5v11.5H5z"/><path d="M12 2.5V6h3.5M7.5 10h5M7.5 13h5"/>',
+  agents: '<path d="M10 2.5l1.6 4.4 4.4 1.6-4.4 1.6L10 14.5l-1.6-4.4L4 8.5l4.4-1.6z"/><path d="M15.5 13v4M13.5 15h4"/>',
   config: '<circle cx="10" cy="10" r="2.6"/><path d="M10 2.5v2.2M10 15.3v2.2M2.5 10h2.2M15.3 10h2.2M4.7 4.7l1.6 1.6M13.7 13.7l1.6 1.6M4.7 15.3l1.6-1.6M13.7 6.3l1.6-1.6"/>'
 }
-const KIND_LABEL: Record<ModuleSummary['kind'], string> = { frontend: 'Frontend', backend: 'Backend', shared: 'Shared', tests: 'Tests', docs: 'Docs', config: 'Config' }
+const KIND_LABEL: Record<ModuleSummary['kind'], string> = { frontend: 'Frontend', backend: 'Backend', shared: 'Shared', tests: 'Tests', docs: 'Docs', config: 'Config', agents: 'AI agents' }
 
 function kindIcon(k: ModuleSummary['kind']): string {
   return `<svg class="kind k-${k}" width="20" height="20" viewBox="0 0 20 20" aria-label="${KIND_LABEL[k]}" role="img">${KIND_ICON[k]}</svg>`
@@ -256,19 +257,34 @@ const FACT_GROUP: Record<ChangeFact['kind'], string> = {
   dependency: 'Dependencies',
   env: 'Environment variables',
   config: 'Config',
-  migration: 'Migrations'
+  migration: 'Migrations',
+  agent: 'AI agent setup'
 }
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`
 
+/** Added, changed, removed and renamed as a coloured shape, so the word isn't needed. */
+export function actIcon(a: SymbolChange['action'] | 'renamed', size = 16): string {
+  const inner: Record<string, string> = {
+    added: '<path d="M8 4.5v7M4.5 8h7"/>',
+    changed: '<circle cx="8" cy="8" r="2.2" class="fill"/>',
+    removed: '<path d="M4.5 8h7"/>',
+    renamed: '<path d="M4.5 8h6.5M8.5 5.2L11.3 8l-2.8 2.8"/>'
+  }
+  const label = { added: 'Added', changed: 'Changed', removed: 'Removed', renamed: 'Renamed' }[a]
+  return `<svg class="ai ai-${a}" width="${size}" height="${size}" viewBox="0 0 16 16" role="img" aria-label="${label}"><title>${label}</title><rect x="1" y="1" width="14" height="14" rx="4"/>${inner[a]}</svg>`
+}
+const fileAct = (s: DiffFile['status']) => (s === 'added' ? 'added' : s === 'deleted' ? 'removed' : s === 'renamed' ? 'renamed' : 'changed') as SymbolChange['action'] | 'renamed'
+const counted = (acts: (readonly [SymbolChange['action'], number])[]) => acts.map(([a, n]) => `<span class="cnt">${actIcon(a, 14)}${n}</span>`).join('')
+
 function symbolRow(y: SymbolChange): string {
   return `<details class="sym">
-    <summary><span class="act act-${y.action}">${ACTION_LABEL[y.action]}</span><span class="s-kind">${SYM_KIND[y.kind]}</span><code class="s-name">${esc(y.kind === 'template' ? '<template>' : y.name)}</code><span class="s-desc">${y.description ? esc(y.description) : `<span class="plus">+${y.lines.filter(l => l.type === 'add').length}</span> <span class="minus">−${y.lines.filter(l => l.type === 'del').length}</span>`}</span>${y.line ? `<span class="loc">line ${y.line}</span>` : ''}</summary>
-    <div class="s-body">${y.lines.length ? diffLines(y.lines) : '<p class="muted">No lines to show.</p>'}</div>
+    <summary>${actIcon(y.action)}<span class="s-kind">${SYM_KIND[y.kind]}</span><code class="s-name">${esc(y.kind === 'template' ? '<template>' : y.name)}</code><span class="s-desc">${esc(y.description ?? '')}</span><span class="s-size"><span class="plus">+${y.lines.filter(l => l.type === 'add').length}</span> <span class="minus">−${y.lines.filter(l => l.type === 'del').length}</span></span>${y.line ? `<span class="loc">line ${y.line}</span>` : ''}</summary>
+    <div class="s-body">${y.description ? `<p class="s-what">${esc(y.description)}</p>` : ''}${y.lines.length ? diffLines(y.lines) : '<p class="muted">No lines to show.</p>'}</div>
   </details>`
 }
 
 function factItem(f: ChangeFact, withFile = false): string {
-  return `<a class="fact" href="#c${fileId(f.file)}" data-open-cfile="${esc(f.file)}"><span class="act act-${f.action}">${ACTION_LABEL[f.action]}</span><code>${esc(f.label)}</code>${f.detail ? `<span class="muted">${esc(f.detail)}</span>` : ''}${withFile ? `<span class="loc">${esc(base(f.file))}</span>` : ''}</a>`
+  return `<a class="fact" href="#c${fileId(f.file)}" data-open-cfile="${esc(f.file)}">${actIcon(f.action)}<code>${esc(f.label)}</code>${f.detail ? `<span class="muted">${esc(f.detail)}</span>` : ''}${withFile ? `<span class="loc">${esc(base(f.file))}</span>` : ''}</a>`
 }
 
 /** One file in "The change": what it is, then the functions and components it changes, then its diff. */
@@ -278,10 +294,10 @@ function changeFile(f: FileSummary, d: DiffFile | undefined, root?: string): str
   const acts = (['added', 'changed', 'removed'] as const).map(a => [a, f.symbols.filter(y => y.action === a).length] as const).filter(([, n]) => n)
   return `<details class="cfile" id="c${fileId(f.path)}" data-path="${esc(f.path)}">
     <summary>
-      <span class="st-badge st-${st.cls}">${st.label}</span>
+      ${actIcon(fileAct(f.status))}
       <span class="path"><span class="dir">${esc(root && f.path.startsWith(root) ? dir(f.path).slice(root.length) : dir(f.path))}</span>${esc(base(f.path))}</span>
       <span class="m-purpose">${esc(f.purpose ?? f.role)}</span>
-      <span class="sym-n">${acts.map(([a, n]) => `<i class="dotn act-${a}" title="${n} ${a}">${n}</i>`).join('')}</span>
+      <span class="sym-n">${counted(acts)}</span>
       <span class="m-size"><span class="plus">+${f.additions}</span> <span class="minus">−${f.deletions}</span></span>
     </summary>
     <div class="f-body">
@@ -309,7 +325,7 @@ function changeAreas(review: Review, diffByPath: Map<string, DiffFile>): string 
       <summary>
         ${kindIcon(m.kind)}
         <span class="m-main"><span class="m-name">${esc(m.name)}${m.root ? ` <span class="m-root">${esc(m.root)}</span>` : ''}</span>${m.summary ? `<span class="m-sum">${esc(m.summary)}</span>` : ''}</span>
-        <span class="m-acts">${acts.map(([a, n]) => `<span class="act act-${a}">${n} ${a}</span>`).join('')}</span>
+        <span class="m-acts">${counted(acts)}</span>
         <span class="m-size">${plural(files.length, 'file')}<br><span class="plus">+${m.additions}</span> <span class="minus">−${m.deletions}</span></span>
       </summary>
       <div class="m-body">
@@ -318,7 +334,7 @@ function changeAreas(review: Review, diffByPath: Map<string, DiffFile>): string 
     </details>`
   }).join('')
   return `<section class="areas"><h3>Areas changed</h3><div class="strip">${strip}</div>
-  <div class="legend kinds">${kinds.map(k => `<span><i class="sw k-${k}"></i>${KIND_LABEL[k]}</span>`).join('')}<span class="muted">Width: lines changed</span></div>
+  <div class="legend kinds">${kinds.map(k => `<span><i class="sw k-${k}"></i>${KIND_LABEL[k]}</span>`).join('')}<span class="muted">Width: lines changed</span><span class="sep"></span>${(['added', 'changed', 'removed'] as const).map(a => `<span>${actIcon(a, 13)}${ACTION_LABEL[a]}</span>`).join('')}</div>
   <div class="modules">${rows}</div></section>`
 }
 
@@ -367,8 +383,21 @@ function effortPips(n: number): string {
 /** Routes, pages, dependencies, settings: what the change does outside its own files. */
 function outside(facts: ChangeFact[]): string {
   if (!facts.length) return ''
+  facts = facts.filter(f => f.kind !== 'agent')
+  if (!facts.length) return ''
   const groups = (Object.keys(FACT_GROUP) as ChangeFact['kind'][]).map(k => [k, facts.filter(f => f.kind === k)] as const).filter(([, l]) => l.length)
   return `<div class="panel"><h3>Outside the code</h3><div class="fact-groups">${groups.map(([k, l]) => `<div class="fact-group"><div class="fg-name">${FACT_GROUP[k]}</div>${l.map(f => factItem(f, true)).join('')}</div>`).join('')}</div></div>`
+}
+
+/** Changes to how AI coding agents work in this repo: instructions, skills, subagents, commands, hooks. */
+function agentPanel(review: Review): string {
+  const facts = review.change.facts.filter(f => f.kind === 'agent')
+  if (!facts.length) return ''
+  const byFile = new Map(review.files.map(f => [f.path, f]))
+  return `<section class="panel agents-panel"><h3>${kindIcon('agents')} AI agent setup</h3><p class="muted">Changes to the instructions, skills and tools that AI coding agents use in this repo.</p><div class="agent-list">${facts.map(f => {
+    const file = byFile.get(f.file)
+    return `<a class="agent-item" href="#c${fileId(f.file)}" data-open-cfile="${esc(f.file)}">${actIcon(f.action)}<span class="ag-main"><b>${esc(f.label)}</b>${file?.purpose ? `<span>${esc(file.purpose)}</span>` : ''}</span><span class="loc">${esc(f.file)}</span></a>`
+  }).join('')}</div></section>`
 }
 
 /** Part one: what the change does, stated as fact. */
@@ -381,11 +410,12 @@ function changePart(review: Review, diffByPath: Map<string, DiffFile>, add: numb
   const chips = [
     `<span class="chip-f"><b>${review.diff.length}</b> file${review.diff.length === 1 ? '' : 's'} <span class="plus">+${add}</span> <span class="minus">−${del}</span></span>`,
     `<span class="chip-f"><b>${review.modules.length}</b> area${review.modules.length === 1 ? '' : 's'}</span>`,
-    syms.length ? `<span class="chip-f">${n('added') ? `<span class="act act-added">${n('added')} added</span>` : ''}${n('changed') ? `<span class="act act-changed">${n('changed')} changed</span>` : ''}${n('removed') ? `<span class="act act-removed">${n('removed')} removed</span>` : ''} functions and types</span>` : '',
+    syms.length ? `<span class="chip-f">${counted((['added', 'changed', 'removed'] as const).map(a => [a, n(a)] as const).filter(([, k]) => k))} functions and types</span>` : '',
     tests.length ? `<span class="chip-f"><b>${tests.length}</b> test${tests.length === 1 ? '' : 's'}</span>` : '',
     count('route') ? `<span class="chip-f"><b>${count('route')}</b> API route${count('route') === 1 ? '' : 's'}</span>` : '',
     count('dependency') ? `<span class="chip-f"><b>${count('dependency')}</b> dependenc${count('dependency') === 1 ? 'y' : 'ies'}</span>` : '',
     count('env') ? `<span class="chip-f"><b>${count('env')}</b> env var${count('env') === 1 ? '' : 's'}</span>` : '',
+    count('agent') ? `<a class="chip-f" href="#agents" data-target="agents">${kindIcon('agents')}<b>${count('agent')}</b> AI agent change${count('agent') === 1 ? '' : 's'}</a>` : '',
     `<span class="chip-f">${effortPips(c.effort)}</span>`
   ].filter(Boolean).join('')
   const statusMap = treemap(review, {
@@ -398,8 +428,9 @@ function changePart(review: Review, diffByPath: Map<string, DiffFile>, add: numb
       <div class="facts">${chips}</div>
     </section>
     ${c.flow?.length ? `<div class="panel flow-panel"><h3>How it fits together</h3>${flowDiagram(c.flow)}</div>` : ''}
+    ${agentPanel(review).replace('<section class="panel agents-panel">', '<section class="panel agents-panel" id="agents">')}
     ${changeAreas(review, diffByPath)}
-    <section class="overview${c.facts.length ? '' : ' one'} later">
+    <section class="overview${c.facts.some(f => f.kind !== 'agent') ? '' : ' one'} later">
       <div class="panel"><h3>Files</h3>${statusMap}<div class="legend">${(['added', 'changed', 'removed', 'renamed'] as const).map(s => `<span><i class="sw" style="background:var(--s-${s})"></i>${s[0]!.toUpperCase()}${s.slice(1)}</span>`).join('')}<span class="muted">Size: lines changed</span></div></div>
       ${outside(c.facts)}
     </section>`
