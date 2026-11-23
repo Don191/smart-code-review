@@ -179,17 +179,17 @@ const html = renderHtml(result)
 
 Claude calls go through the official Anthropic SDK, which is loaded only when Claude is used. The other providers use `fetch`, so the core runs in Node, serverless functions and edge runtimes. `smart-code-review/node` adds `fromGit` for local repos. The review is also embedded in the report as JSON (`<script id="review-data">`), so other tools can read it back.
 
-## Part of AGIlity
+## Part of Flairboard
 
-smart-code-review is the PR review step of AGIlity, a private multi-agent platform for the whole software lifecycle: shaping work, development, verification, performance, security, PR review, testing and penetration testing. The name blends agile and AGI. AGIlity isn't public yet, but smart-code-review is designed to fit into it and also works on its own.
+smart-code-review is the PR review step of Flairboard, a private multi-agent platform for the whole software lifecycle: shaping work, development, verification, performance, security, PR review, testing and penetration testing. Flairboard isn't public yet, but smart-code-review is designed to fit into it and also works on its own.
 
-In AGIlity, the `reviewer` agent runs this package in the `pr-review` stage, alongside the performance and security agents:
+In Flairboard, the `reviewer` agent runs this package in the `pr-review` stage, alongside the performance and security agents:
 
 ```ts
-import { review, toAgilityResult } from 'smart-code-review'
+import { review, toFlairboardResult } from 'smart-code-review'
 
 const r = await review({ diff, head, base }, { provider, env, context })
-const result = toAgilityResult(r)
+const result = toFlairboardResult(r)
 // { agent: 'reviewer', verdict: 'pass' | 'warn' | 'fail', summary, findings, artifacts: [{ ref: 'review.html', html }], questions }
 ```
 
@@ -197,7 +197,7 @@ const result = toAgilityResult(r)
 - Finding ids are stable across runs of the same change, so a finding can be tracked from one review to the next.
 - Acceptance criteria that aren't clearly met become `questions` for the owner of the work item.
 - Notes people add in the report come back on each finding as `feedback` (agreed, fixed, won't fix or discuss), after `applyAnnotations(review, parseAnnotations(json))`.
-- With `env.AGILITY_MODE = 'lite'`, or `offline: true`, nothing is fetched. Work items are passed in as `context`, and the model is whatever `provider` is passed in, or none for static checks only.
+- With `env.FLAIRBOARD_MODE = 'lite'`, or `offline: true`, nothing is fetched. Work items are passed in as `context`, and the model is whatever `provider` is passed in, or none for static checks only.
 
 ## GitHub Action
 
