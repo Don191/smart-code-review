@@ -1,7 +1,7 @@
 export * from "./types.js";
 export { parseDiff, addedLines, formatFile, excerpt } from "./diff.js";
 export { review, stableIds } from "./review.js";
-export { toAgilityResult } from "./adapters/agility.js";
+export { toFlairboardResult } from "./adapters/flairboard.js";
 export { moduleOf, looksLikeMonorepo, kindFromName } from "./modules.js";
 export { renderHtml, flowDiagram } from "./report/html.js";
 export { symbolChanges, changeFacts } from "./facts.js";

@@ -1,10 +1,10 @@
 import { type Review } from '../types.ts';
 /**
- * smart-code-review is the PR review step of AGIlity, a private multi-agent
- * platform for the whole software lifecycle. These are the shapes AGIlity's
+ * smart-code-review is the PR review step of Flairboard, a private multi-agent
+ * platform for the whole software lifecycle. These are the shapes Flairboard's
  * `reviewer` agent works with, and the mapping from a Review to them.
  */
-export interface AgilityFinding {
+export interface FlairboardFinding {
     id: string;
     severity: 'critical' | 'high' | 'medium' | 'low' | 'info';
     title: string;
@@ -27,11 +27,11 @@ export interface AgilityFinding {
         at: string;
     };
 }
-export interface AgilityReviewResult {
+export interface FlairboardReviewResult {
     agent: 'reviewer';
     verdict: 'pass' | 'warn' | 'fail';
     summary: string;
-    findings: AgilityFinding[];
+    findings: FlairboardFinding[];
     artifacts: {
         label: string;
         ref: string;
@@ -44,6 +44,6 @@ export interface AgilityReviewResult {
     /** The HTML report, also in artifacts. */
     html: string;
 }
-export declare function toAgilityResult(review: Review, opts?: {
+export declare function toFlairboardResult(review: Review, opts?: {
     html?: boolean;
-}): AgilityReviewResult;
+}): FlairboardReviewResult;

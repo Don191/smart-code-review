@@ -1,7 +1,7 @@
 export * from './types.ts'
 export { parseDiff, addedLines, formatFile, excerpt } from './diff.ts'
 export { review, stableIds, type ReviewOptions } from './review.ts'
-export { toAgilityResult, type AgilityFinding, type AgilityReviewResult } from './adapters/agility.ts'
+export { toFlairboardResult, type FlairboardFinding, type FlairboardReviewResult } from './adapters/flairboard.ts'
 export { moduleOf, looksLikeMonorepo, kindFromName, type ModuleRule } from './modules.ts'
 export { renderHtml, flowDiagram, type RenderOptions } from './report/html.ts'
 export { symbolChanges, changeFacts } from './facts.ts'

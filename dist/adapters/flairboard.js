@@ -2,7 +2,7 @@ import { excerpt } from "../diff.js";
 import { renderHtml } from "../report/html.js";
 import { SEVERITY_LEVEL } from "../types.js";
 const VERDICT = { approve: 'pass', comment: 'warn', 'request-changes': 'fail' };
-export function toAgilityResult(review, opts = {}) {
+export function toFlairboardResult(review, opts = {}) {
     const diffByPath = new Map(review.diff.map(d => [d.path, d]));
     const notes = new Map((review.annotations ?? []).map(a => [a.findingId, a]));
     const findings = review.findings.map(f => {

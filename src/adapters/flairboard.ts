@@ -3,11 +3,11 @@ import { renderHtml } from '../report/html.ts'
 import { SEVERITY_LEVEL, type Review } from '../types.ts'
 
 /**
- * smart-code-review is the PR review step of AGIlity, a private multi-agent
- * platform for the whole software lifecycle. These are the shapes AGIlity's
+ * smart-code-review is the PR review step of Flairboard, a private multi-agent
+ * platform for the whole software lifecycle. These are the shapes Flairboard's
  * `reviewer` agent works with, and the mapping from a Review to them.
  */
-export interface AgilityFinding {
+export interface FlairboardFinding {
   id: string
   severity: 'critical' | 'high' | 'medium' | 'low' | 'info'
   title: string
@@ -22,11 +22,11 @@ export interface AgilityFinding {
   feedback?: { status: string; note?: string; by?: string; at: string }
 }
 
-export interface AgilityReviewResult {
+export interface FlairboardReviewResult {
   agent: 'reviewer'
   verdict: 'pass' | 'warn' | 'fail'
   summary: string
-  findings: AgilityFinding[]
+  findings: FlairboardFinding[]
   artifacts: { label: string; ref: string; html?: string }[]
   /** Acceptance criteria the change doesn't clearly meet, as questions for the person who owns the work item. */
   questions: string[]
@@ -38,10 +38,10 @@ export interface AgilityReviewResult {
 
 const VERDICT = { approve: 'pass', comment: 'warn', 'request-changes': 'fail' } as const
 
-export function toAgilityResult(review: Review, opts: { html?: boolean } = {}): AgilityReviewResult {
+export function toFlairboardResult(review: Review, opts: { html?: boolean } = {}): FlairboardReviewResult {
   const diffByPath = new Map(review.diff.map(d => [d.path, d]))
   const notes = new Map((review.annotations ?? []).map(a => [a.findingId, a]))
-  const findings: AgilityFinding[] = review.findings.map(f => {
+  const findings: FlairboardFinding[] = review.findings.map(f => {
     const file = f.file ? diffByPath.get(f.file) : undefined
     const lines = file && f.line ? excerpt(file, f.line, 2) : []
     return {

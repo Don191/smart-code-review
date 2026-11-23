@@ -12,7 +12,7 @@ import {
   githubIssues,
   lineRule,
   symbolChanges,
-  toAgilityResult,
+  toFlairboardResult,
   gatherContext,
   changeFacts,
   flowDiagram,
@@ -241,19 +241,19 @@ new file mode 100644
   assert.match(renderHtml(r), /AI agent setup/)
 })
 
-test('fits AGIlity: stable ids, severity scale, lite mode and the adapter', async () => {
-  const a = await review({ diff, title: 'Saved carts' }, { env: { AGILITY_MODE: 'lite' }, context })
+test('fits Flairboard: stable ids, severity scale, lite mode and the adapter', async () => {
+  const a = await review({ diff, title: 'Saved carts' }, { env: { FLAIRBOARD_MODE: 'lite' }, context })
   const b = await review({ diff, title: 'Saved carts' }, { offline: true, context })
   assert.deepEqual(a.findings.map(f => f.id), b.findings.map(f => f.id))
   assert.ok(a.findings.every(f => /^scr-[a-z0-9]+(-\d+)?$/.test(f.id)))
   assert.equal(new Set(a.findings.map(f => f.id)).size, a.findings.length)
-  const out = toAgilityResult(a)
+  const out = toFlairboardResult(a)
   assert.equal(out.agent, 'reviewer')
   assert.ok(['pass', 'warn', 'fail'].includes(out.verdict))
   assert.ok(out.findings.every(f => ['critical', 'high', 'medium', 'low'].includes(f.severity)))
   assert.match(out.summary, /Risk \d+\/100\.$/)
   assert.equal(out.artifacts[0]?.ref, 'review.html')
-  const got = await gatherContext({ diff, title: 'Fixes #12' }, { env: { AGILITY_MODE: 'lite' } })
+  const got = await gatherContext({ diff, title: 'Fixes #12' }, { env: { FLAIRBOARD_MODE: 'lite' } })
   assert.deepEqual(got.items, [])
 })
 
@@ -270,8 +270,8 @@ test('Claude is the default provider at high effort', async () => {
   assert.ok(strictSchema(AI_SCHEMA).additionalProperties === false)
 })
 
-test('notes on findings carry into the report and the AGIlity result', async () => {
-  const { applyAnnotations, parseAnnotations, unresolvedFindings, renderHtml, toAgilityResult, review: run } = await import('../src/index.ts')
+test('notes on findings carry into the report and the Flairboard result', async () => {
+  const { applyAnnotations, parseAnnotations, unresolvedFindings, renderHtml, toFlairboardResult, review: run } = await import('../src/index.ts')
   const r = await run({ diff }, { fetchContext: false })
   assert.ok(r.findings.length)
   const id = r.findings[0]!.id
@@ -282,5 +282,5 @@ test('notes on findings carry into the report and the AGIlity result', async () 
   const html = renderHtml(withNotes)
   assert.match(html, /data-status="wont-fix"/)
   assert.match(html, /Covered by the gateway/)
-  assert.equal(toAgilityResult(withNotes, { html: false }).findings[0]!.feedback?.status, 'wont-fix')
+  assert.equal(toFlairboardResult(withNotes, { html: false }).findings[0]!.feedback?.status, 'wont-fix')
 })
